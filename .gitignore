@@ -1,0 +1,13 @@
+*.*
+*
+!*/
+!/nemu/*
+!/nexus-am/*
+!/nanos-lite/*
+!/navy-apps/*
+!/npc/*
+!/abstract-machine/*
+!Makefile
+!README.md
+!.gitignore
+!init.sh
