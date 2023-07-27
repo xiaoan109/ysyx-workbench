@@ -1,8 +1,32 @@
-all:
-	@echo "Write this Makefile by your self."
+# all:
+# 	@echo "Write this Makefile by your self."
+# 
+# sim:
+# 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
+# 	@echo "Write this Makefile by your self."
+# 
+# include ../Makefile
 
-sim:
-	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@echo "Write this Makefile by your self."
+### Questasim Makefile ###
 
-include ../Makefile
+# Variables
+VSRC = $(wildcard vsrc/*.v)
+TOP = example
+WORK = work
+
+# Default target
+all: compile run
+
+# Target to compile verilog sources
+compile: $(VSRC)
+	if [ ! -d "$(WORK)" ]; then vlib $(WORK); fi
+	vlog -work $(WORK) $^
+
+# Target to run simulation
+run:
+	vsim -c -do "run -all" $(WORK).$(TOP)
+
+# Target to clean files
+clean:
+	rm -rf transcript vsim.wlf $(WORK)
+
