@@ -31,8 +31,52 @@ static char *code_format =
 "  return 0; "
 "}";
 
-static void gen_rand_expr() {
-  buf[0] = '\0';
+static int choose(int n) {
+  return rand() % n;
+}
+
+static void gen_num() {
+  sprintf(buf + strlen(buf), "%uu", (unsigned int)choose(100));
+  buf[strlen(buf)] = '\0';
+}
+
+static void gen(char a) {
+  sprintf(buf + strlen(buf), "%c", a);
+  buf[strlen(buf)] = '\0';
+}
+
+static void gen_rand_op() {
+  char opt = 0;
+  switch (choose(4)) {
+    case 0: opt = '+'; break;
+    case 1: opt = '-'; break;
+    case 2: opt = '*'; break;
+    case 3: opt = '/'; break;
+  }
+  sprintf(buf + strlen(buf), "%c", opt);
+  buf[strlen(buf)] = '\0';
+}
+
+static inline void gen_rand_expr() {
+  if (strlen(buf) < 100) {
+    switch (choose(3)) {
+      case 0: gen_num(); break;
+      case 1: gen('('); gen_rand_expr(); gen(')'); break;
+      default: gen_rand_expr(); gen_rand_op(); gen_rand_expr(); break;
+    }
+  } else {
+    gen_num();
+  }
+  buf[strlen(buf)] = '\0';
+}
+
+void remove_u(char *p) {
+  char *q = p;
+  while ((q = strchr(q, 'u')) != NULL) {
+    // reuse code_buf
+    strcpy(code_buf, q + 1);
+    strcpy(q, code_buf);
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -44,6 +88,7 @@ int main(int argc, char *argv[]) {
   }
   int i;
   for (i = 0; i < loop; i ++) {
+    memset(buf,0,sizeof(buf));
     gen_rand_expr();
 
     sprintf(code_buf, code_format, buf);
@@ -61,7 +106,11 @@ int main(int argc, char *argv[]) {
 
     int result;
     ret = fscanf(fp, "%d", &result);
-    pclose(fp);
+    if (ret != 1) continue;
+    ret = pclose(fp);
+    if (ret != 0) continue;
+
+    remove_u(buf);
 
     printf("%u %s\n", result, buf);
   }
