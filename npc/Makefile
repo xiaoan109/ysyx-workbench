@@ -15,12 +15,14 @@ CSRC = $(wildcard dpisrc/*.c)
 TOP = testbench_cpu
 WORK = work
 INCDIR = vsrc/include
-TESTNAME =
 # Simulator type (mti/vcs/nc)
-SIMULATOR = vcs
+SIMULATOR = mti
 # MTI option
 MTI_COMPILE_OPTIONS  = +acc=blnr -noincr +incdir+$(INCDIR) -sv
 MTI_RUN_OPTIONS      = -voptargs="+acc=blnr"
+ifdef TESTNAME
+	MTI_RUN_OPTIONS += +TESTNAME=$(TESTNAME)
+endif
 MTI_VC_OPTIONS = $(VSRC)
 
 # VCS option
@@ -29,7 +31,10 @@ VCS_OPTIONS    = +vcs+lic+wait +v2k +lint=all,noTMR,noVCDE -debug_acc+all \
 				 -timescale=1ns/1ps -LDFLAGS -Wl,--no-as-needed \
 				 -fsdb
 VCS_SIM_OPTION = +vcs+lic+wait +vcs+flush+log -assert nopostproc \
-				 -sv_lib dpilib +DUMP_FSDB +TESTNAME=$(TESTNAME)
+				 -sv_lib dpilib +DUMP_FSDB
+ifdef TESTNAME
+	VCS_SIM_OPTION += +TESTNAME=$(TESTNAME)
+endif
 VCS_VC_OPTIONS = $(VSRC)
 
 # Default Target
@@ -107,5 +112,5 @@ all_mti : compile_mti run_mti
 # Target to clean files
 clean:
 	rm -rf transcript $(WORK) *.log *.vcd *.wlf *.so *.vstf \
-	simv simv.daidir csrc *.do ucli.key vc_hdrs.h logs \
-	*.fsdb verdiLog stack.info*
+	simv simv.daidir csrc ucli.key vc_hdrs.h logs \
+	*.fsdb verdiLog stack.info* tests/*.bin

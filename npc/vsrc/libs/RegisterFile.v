@@ -8,14 +8,13 @@ module RegisterFile #(parameter ADDR_WIDTH = 1, DATA_WIDTH = 1) (
         output [DATA_WIDTH-1:0] rdata1,
         output [DATA_WIDTH-1:0] rdata2
     );
-    reg [DATA_WIDTH-1:0] rf [2**ADDR_WIDTH-1:0];
+    reg [DATA_WIDTH-1:0] rf [0:2**ADDR_WIDTH-1];
     always @(posedge clk) begin
-        if (wen)
+        if (wen && waddr)
             rf[waddr] <= wdata;
     end
-
+    
     integer i;
-
     initial begin
         for(i = 0; i < 2**ADDR_WIDTH; i = i + 1)
             rf[i] = 0;

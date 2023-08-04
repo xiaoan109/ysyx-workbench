@@ -1,5 +1,4 @@
 `include "defines.v"
-import "DPI-C" function void rtl_pmem_read(input int raddr, output int rdata);
 module IFU(
         input clk,
         input rst,
@@ -8,8 +7,9 @@ module IFU(
         output reg [`INST_DW-1:0] instr
     );
     //instruction fetch
+    import "DPI-C" function void rtl_pmem_read(input int raddr, output int rdata);
     always @(pc) begin
-        // $display("@%t, read pmem", $time);
+        // $display("@%t, fetch instr", $time);
         rtl_pmem_read(pc, instr);
     end
     Reg #(.WIDTH(`PC_DW), .RESET_VAL(`RESET_PC)) u_PC_Reg(

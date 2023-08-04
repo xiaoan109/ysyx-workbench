@@ -1,34 +1,32 @@
 `include "defines.v"
 module EXU(
-        input [`XLEN-1:0] alu_a,
-        input [`XLEN-1:0] alu_b,
-        input [3:0] alu_ctrl,
-        input [2:0] branch,
-        // input sext_32b,
-        // input [3:0] mul_div_rem_sel,
-        output [`XLEN-1:0] alu_out,
-        output pc_a_sel,
-        output pc_b_sel
+        input [`XLEN-1:0] ALUA,
+        input [`XLEN-1:0] ALUB,
+        input [3:0] ALUctr,
+        input [2:0] Branch,
+        output [`XLEN-1:0] ALUOut,
+        output PCAsrc,
+        output PCBsrc
     );
 
     wire less;
     wire zero;
 
     ALU u_ALU(
-            .alu_a(alu_a),
-            .alu_b(alu_b),
-            .alu_ctrl(alu_ctrl),
-            .alu_out(alu_out),
+            .ALUA(ALUA),
+            .ALUB(ALUB),
+            .ALUctr(ALUctr),
+            .ALUOut(ALUOut),
             .less(less),
             .zero(zero)
         );
 
     Branch u_Branch(
-               .branch(branch),
+               .Branch(Branch),
                .zero(zero),
                .less(less),
-               .pc_a_sel(pc_a_sel),
-               .pc_b_sel(pc_b_sel)
+               .PCAsrc(PCAsrc),
+               .PCBsrc(PCBsrc)
            );
 
 endmodule

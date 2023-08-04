@@ -1,39 +1,44 @@
-import "DPI-C" function void init_mem(input string testcase);
 `timescale 1 ns / 1 ps
 module testbench_cpu;
     integer numcycles;  //number of cycles in test
     reg clk,rst;  //clk and reset signals
     string testcase; //name of testcase
-
+    longint img_size;
     CPU_top u_CPU_top(
                 .clk(clk),
                 .rst(rst)
             );
 
     initial begin
-        if($test$plusargs("DUMP_FSDB"))begin
-            $fsdbDumpfile("wave.fsdb");
-            $fsdbDumpvars;
-            $fsdbDumpMDA;
-        end
+        // if($test$plusargs("DUMP_FSDB"))begin
+        //     $fsdbDumpfile("wave.fsdb");
+        //     $fsdbDumpvars();
+        //     $fsdbDumpMDA();
+        // end
     end
 
 
-    initial begin
-        $monitor("cycle=%d, pc=%h, instruct= %h op=%h, rs1=%h,rs2=%h, rd=%h, imm=%h",
-                 numcycles,  u_CPU_top.pc, u_CPU_top.instr, u_CPU_top.u_IDU.u_ControlUnit.opcode,
-                 u_CPU_top.rf_raddr1,u_CPU_top.rf_raddr2,u_CPU_top.rf_waddr,u_CPU_top.imm);
-        if($value$plusargs("TESTNAME=%s",testcase))begin
-            run_riscv_test();
-        end
+    initial begin : Testbench
+        // $monitor("cycle=%d, pc=%h, instruct= %h op=%h, rs1=%h,rs2=%h, rd=%h, imm=%h", numcycles,  u_CPU_top.pc, u_CPU_top.instr, u_CPU_top.u_IDU.u_ControlUnit.op, u_CPU_top.rs1,u_CPU_top.rs2,u_CPU_top.rd,u_CPU_top.imm);
+        run_riscv_test();
+        free_mem();
+        $finish();
     end
 
-
+    import "DPI-C" function longint init_mem(input string testcase);
     task loadtestcase;  //load intstructions to instruction mem
         begin
-            init_mem({"tests/", testcase, ".hex"});
-            // $readmemh({testcase, ".hex"},instructions.ram);
-            $display("---Begin test case %s-----", testcase);
+            if($value$plusargs("TESTNAME=%s",testcase))begin
+                img_size = init_mem({"tests/", testcase, "-riscv32e-npc.bin"});
+                $display("---Begin test case %s-----", testcase);
+                // $readmemh({testcase, ".hex"},instructions.ram);
+            end
+            else begin
+                img_size = init_mem("");
+                $display("---Begin test case builtin-----");
+            end
+
+
         end
     endtask
 
@@ -72,24 +77,32 @@ module testbench_cpu;
         begin
             debugdata=u_CPU_top.u_RegFile.rf[regid]; //get register content
             if(debugdata==results)begin
-                $display("OK: end of cycle %d reg %h need to be %h, get %h",
-                         numcycles-1, regid, results, debugdata);
+                $display("OK: end of cycle %d reg %h need to be %h, get %h", numcycles-1, regid, results, debugdata);
             end
             else begin
-                $display("!!!Error: end of cycle %d reg %h need to be %h, get %h",
-                         numcycles-1, regid, results, debugdata);
+                $display("!!!Error: end of cycle %d reg %h need to be %h, get %h", numcycles-1, regid, results, debugdata);
             end
         end
     endtask
 
-    integer maxcycles =10000;
-
+    integer maxcycles =1000000;
+    // TODO: fix dpi-c BUG
+    import "DPI-C" function void set_gpr_ptr(input logic [31:0] a []);
+    // import "DPI-C" function void dump_gpr();
+    import "DPI-C" function void difftest_step(input int pc);
+    import "DPI-C" function void set_pc(input int pc);
+    import "DPI-C" function void set_regfile();
     task run;
         integer i;
         begin
             i = 0;
             while( (u_CPU_top.instr!=32'h00100073) && (i<maxcycles))begin //TODO
                 step();
+                set_gpr_ptr(u_CPU_top.u_RegFile.rf);
+                set_regfile();
+                set_pc(u_CPU_top.pc);
+                difftest_step(u_CPU_top.pc);
+                // dump_gpr();
                 i = i+1;
             end
         end
@@ -101,24 +114,23 @@ module testbench_cpu;
                 $display("!!!Error:test case %s does not terminate!", testcase);
             end
             else if(u_CPU_top.u_RegFile.rf[10]==32'h0)begin
-                $display("OK:test case %s finshed OK at cycle %d.",
-                         testcase, numcycles-1);
+                $display("OK:test case %s finshed OK at cycle %d.\n\033[1;32mHIT GOOD TRAP\033[0m", testcase, numcycles-1);
             end
             else if(u_CPU_top.u_RegFile.rf[10]==32'h1)begin
-                $display("!!!ERROR:test case %s finshed with error in cycle %d.",
-                         testcase, numcycles-1);
+                $display("!!!ERROR:test case %s finshed with error in cycle %d.\n\033[1;31mHIT BAD TRAP\033[0m", testcase, numcycles-1);
             end
             else begin
-                $display("!!!ERROR:test case %s unknown error in cycle %d.",
-                         testcase, numcycles-1);
+                $display("!!!ERROR:test case %s unknown error in cycle %d.", testcase, numcycles-1);
             end
         end
     endtask
 
-
+    import "DPI-C" function void free_mem();
+    import "DPI-C" function void init_difftest(input string ref_so_file, input longint img_size, input int port);
     task run_riscv_test;
         begin
             loadtestcase();
+            init_difftest("riscv32-nemu-interpreter-so", img_size, 0);
             resetcpu();
             run();
             checkmagnum();
