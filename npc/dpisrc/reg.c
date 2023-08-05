@@ -27,7 +27,7 @@ void dump_gpr() {
 }
 
 void set_regfile() {
-	for (int i=0; i<32; i++) {
+	for (int i=1; i<32; i++) {
 		cpu.gpr[i] = cpu_gpr[i];
 	}
 }

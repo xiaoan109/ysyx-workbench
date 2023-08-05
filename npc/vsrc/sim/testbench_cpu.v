@@ -9,19 +9,17 @@ module testbench_cpu;
                 .rst(rst)
             );
 
-    initial begin
+    // initial begin
         // if($test$plusargs("DUMP_FSDB"))begin
         //     $fsdbDumpfile("wave.fsdb");
         //     $fsdbDumpvars();
         //     $fsdbDumpMDA();
         // end
-    end
+    // end
 
 
     initial begin : Testbench
-        // $monitor("cycle=%d, pc=%h, instruct= %h op=%h, rs1=%h,rs2=%h, rd=%h, imm=%h", numcycles,  u_CPU_top.pc, u_CPU_top.instr, u_CPU_top.u_IDU.u_ControlUnit.op, u_CPU_top.rs1,u_CPU_top.rs2,u_CPU_top.rd,u_CPU_top.imm);
         run_riscv_test();
-        free_mem();
         $finish();
     end
 
@@ -31,7 +29,6 @@ module testbench_cpu;
             if($value$plusargs("TESTNAME=%s",testcase))begin
                 img_size = init_mem({"tests/", testcase, "-riscv32e-npc.bin"});
                 $display("---Begin test case %s-----", testcase);
-                // $readmemh({testcase, ".hex"},instructions.ram);
             end
             else begin
                 img_size = init_mem("");
@@ -102,7 +99,6 @@ module testbench_cpu;
                 set_regfile();
                 set_pc(u_CPU_top.pc);
                 difftest_step(u_CPU_top.pc);
-                // dump_gpr();
                 i = i+1;
             end
         end
@@ -134,6 +130,7 @@ module testbench_cpu;
             resetcpu();
             run();
             checkmagnum();
+            free_mem();
         end
     endtask
 endmodule

@@ -16,7 +16,7 @@ module LSU(
     wire [`XLEN-1:0] waddr;
     wire [3:0] mask;
     wire [3:0] wmask;
-    wire MemWr;
+    // wire MemWr;
     wire MemRd;
 
     assign raddr = MemAddr;

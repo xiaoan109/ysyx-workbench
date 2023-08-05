@@ -59,7 +59,7 @@ module ALU(
     assign xor_ab = ALUA ^ ALUB;
 
     //compare
-    assign less = unsigned_signed ? sub_add^carry : ALUB == {1'b1, {(`XLEN-1){1'b0}}} ? 0 : result[`XLEN-1]^overflow;
+    assign less = unsigned_signed ? sub_add^carry : ALUB == {1'b1, {(`XLEN-1){1'b0}}} ? 1'b0 : result[`XLEN-1]^overflow;
 
     //out_sel
     MuxKey #(.NR_KEY(11), .KEY_LEN(4), .DATA_LEN(`XLEN)) u_out_sel(

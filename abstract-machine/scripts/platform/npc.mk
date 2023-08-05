@@ -29,7 +29,18 @@ IMAGE_CUTTED_REV = $(shell echo $(IMAGE_REV) | cut -d'-' -f3-)
 
 IMAGE_CUTTED = $(shell echo $(IMAGE_CUTTED_REV) | rev)
 
+SIMULATOR_VALUE = $(shell grep -oP 'SIMULATOR = \K(mti|vcs)' $(NPC_HOME)/Makefile)
 run: image
-	echo $(IMAGE_BASE) $(IMAGE_REV) $(IMAGE_CUTTED_REV) $(IMAGE_CUTTED)
-	$(MAKE) -C $(NPC_HOME) compile run TESTNAME=$(IMAGE_CUTTED)
-
+ifeq ($(SIMULATOR_VALUE),mti)
+ifeq ("$(wildcard $(NPC_HOME)/work)", "")
+	$(MAKE) -C $(NPC_HOME) compile_mti
+endif
+	$(MAKE) -C $(NPC_HOME) run_mti TESTNAME=$(IMAGE_CUTTED)
+else ifeq ($(SIMULATOR_VALUE),vcs)
+ifeq ("$(wildcard $(NPC_HOME)/simv)", "")
+	$(MAKE) -C $(NPC_HOME) compile_vcs
+endif
+	$(MAKE) -C $(NPC_HOME) run_vcs TESTNAME=$(IMAGE_CUTTED)
+else
+	$(error "Invalid SIMULATOR value in Makefile. It should be either 'mti' or 'vcs'")
+endif

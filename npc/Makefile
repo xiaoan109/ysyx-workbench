@@ -16,7 +16,7 @@ TOP = testbench_cpu
 WORK = work
 INCDIR = vsrc/include
 # Simulator type (mti/vcs/nc)
-SIMULATOR = mti
+SIMULATOR = vcs
 # MTI option
 MTI_COMPILE_OPTIONS  = +acc=blnr -noincr +incdir+$(INCDIR) -sv
 MTI_RUN_OPTIONS      = -voptargs="+acc=blnr"
