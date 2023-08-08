@@ -21,6 +21,7 @@ bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
   bool ret = true;
   for(int i=0; i<32; i++) {
     ret = difftest_check_reg(reg_name(i, 32), pc, ref_r->gpr[i] , cpu.gpr[i]);
+    if(!ret) return ret;
   }
   return ret;
 }
