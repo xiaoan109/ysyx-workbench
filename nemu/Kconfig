@@ -149,6 +149,31 @@ config ITRACE_COND
   string "Only trace instructions when the condition is true"
   default "true"
 
+config IRINGBUF
+  depends on TRACE
+  bool "Enable instruction ring buffer"
+  default n
+
+config MTRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable memory access tracer(TODO)"
+  default n
+
+config MTRACE_START
+  depends on MTRACE
+  hex "Traced memory access start address"
+  default 0x80000000
+
+config MTRACE_SIZE
+  depends on MTRACE
+  hex "Traced memory access size"
+  default 0x8000000
+
+config FTRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable function call-ret tracer(TODO)"
+  default n
+
 
 config DIFFTEST
   depends on TARGET_NATIVE_ELF
@@ -197,33 +222,6 @@ config WATCHPOINT
   help
     Enable watchpoint with a reference design.
     Note that this will significantly reduce the performance of NEMU.
-
-config IRINGBUF
-  bool "Enable instruction ring buffer(TODO)"
-  default n
-
-config MTRACE
-  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
-  bool "Enable memory access tracer(TODO)"
-  default n
-
-
-config MTRACE_START
-  depends on MTRACE
-  hex "Traced memory access start address"
-  default 0x80000000
-
-
-config MTRACE_SIZE
-  depends on MTRACE
-  hex "Traced memory access size"
-  default 0x8000000
-
-
-config FTRACE
-  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
-  bool "Enable function call-ret tracer(TODO)"
-  default n
   
 endmenu
 

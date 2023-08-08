@@ -17,6 +17,7 @@
 #include <cpu/decode.h>
 #include <cpu/difftest.h>
 #include <locale.h>
+#include "iringbuf.h"
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -25,22 +26,29 @@
  */
 #define MAX_INST_TO_PRINT 10
 
+#ifdef CONFIG_IRINGBUF
+#define IRINGBUF_SIZE 32
+RingBuffer* rb = NULL;
+#endif
+
+int rb_is_free = 0;
 CPU_state cpu = {};
 uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
+
 
 void device_update();
 bool check_wp();
 
 void _check_wp() {
   if (check_wp()) {
-    if(nemu_state.state == NEMU_RUNNING)
+    if (nemu_state.state == NEMU_RUNNING)
       nemu_state.state = NEMU_STOP;
   }
 }
 
-static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
+static void trace_and_difftest(Decode* _this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
   if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
 #endif
@@ -49,18 +57,27 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   IFDEF(CONFIG_WATCHPOINT, _check_wp());
 }
 
-static void exec_once(Decode *s, vaddr_t pc) {
+static void exec_once(Decode* s, vaddr_t pc) {
   s->pc = pc;
   s->snpc = pc;
   isa_exec_once(s);
   cpu.pc = s->dnpc;
+#ifdef CONFIG_IRINGBUF
+  if (rb) {
+    if (RingBuffer_IsFull(rb)) {
+      uint32_t tmp;
+      RingBuffer_Out(rb, &tmp, 4);
+    }
+    RingBuffer_In(rb, &s->isa.inst.val, 4);
+  }
+#endif
 #ifdef CONFIG_ITRACE
-  char *p = s->logbuf;
+  char* p = s->logbuf;
   p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
   int ilen = s->snpc - s->pc;
   int i;
-  uint8_t *inst = (uint8_t *)&s->isa.inst.val;
-  for (i = ilen - 1; i >= 0; i --) {
+  uint8_t* inst = (uint8_t*)&s->isa.inst.val;
+  for (i = ilen - 1; i >= 0; i--) {
     p += snprintf(p, 4, " %02x", inst[i]);
   }
   int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);
@@ -71,9 +88,9 @@ static void exec_once(Decode *s, vaddr_t pc) {
   p += space_len;
 
 #ifndef CONFIG_ISA_loongarch32r
-  void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
+  void disassemble(char* str, int size, uint64_t pc, uint8_t * code, int nbyte);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
-      MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, ilen);
+    MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t*)&s->isa.inst.val, ilen);
 #else
   p[0] = '\0'; // the upstream llvm does not support loongarch32r
 #endif
@@ -81,10 +98,16 @@ static void exec_once(Decode *s, vaddr_t pc) {
 }
 
 static void execute(uint64_t n) {
+#ifdef CONFIG_IRINGBUF
+  if (!rb) {
+    rb = RingBuffer_Malloc(IRINGBUF_SIZE);
+    Log("Initialize an iringbuf, size is %d Byte(s), aka %d instruction(s)", RingBuffer_Size(rb), RingBuffer_Size(rb) / 4);
+  }
+#endif
   Decode s;
-  for (;n > 0; n --) {
+  for (;n > 0; n--) {
     exec_once(&s, cpu.pc);
-    g_nr_guest_inst ++;
+    g_nr_guest_inst++;
     trace_and_difftest(&s, cpu.pc);
     if (nemu_state.state != NEMU_RUNNING) break;
     IFDEF(CONFIG_DEVICE, device_update());
@@ -92,6 +115,12 @@ static void execute(uint64_t n) {
 }
 
 static void statistic() {
+#ifdef CONFIG_IRINGBUF
+  if (rb != NULL) {
+    Log("Free iringbuf");
+    RingBuffer_Free(rb);
+  }
+#endif
   IFNDEF(CONFIG_TARGET_AM, setlocale(LC_NUMERIC, ""));
 #define NUMBERIC_FMT MUXDEF(CONFIG_TARGET_AM, "%", "%'") PRIu64
   Log("host time spent = " NUMBERIC_FMT " us", g_timer);
@@ -101,6 +130,18 @@ static void statistic() {
 }
 
 void assert_fail_msg() {
+#ifdef CONFIG_IRINGBUF
+  if (rb) {
+    printf(ANSI_FG_RED "[Last several instructions for debug.]\n" ANSI_NONE);
+    for (int i = 0; i < IRINGBUF_SIZE / 4; i++) {
+      if (!RingBuffer_IsEmpty(rb)) {
+        uint32_t dest;
+        RingBuffer_Out(rb, &dest, 4);
+        printf("instr[%d]: 0x%08x\n", i, dest);
+      }
+    }
+  }
+#endif
   isa_reg_display();
   statistic();
 }
@@ -109,10 +150,10 @@ void assert_fail_msg() {
 void cpu_exec(uint64_t n) {
   g_print_step = (n < MAX_INST_TO_PRINT);
   switch (nemu_state.state) {
-    case NEMU_END: case NEMU_ABORT:
-      printf("Program execution has ended. To restart the program, exit NEMU and run again.\n");
-      return;
-    default: nemu_state.state = NEMU_RUNNING;
+  case NEMU_END: case NEMU_ABORT:
+    printf("Program execution has ended. To restart the program, exit NEMU and run again.\n");
+    return;
+  default: nemu_state.state = NEMU_RUNNING;
   }
 
   uint64_t timer_start = get_time();
@@ -123,15 +164,15 @@ void cpu_exec(uint64_t n) {
   g_timer += timer_end - timer_start;
 
   switch (nemu_state.state) {
-    case NEMU_RUNNING: nemu_state.state = NEMU_STOP; break;
+  case NEMU_RUNNING: nemu_state.state = NEMU_STOP; break;
 
-    case NEMU_END: case NEMU_ABORT:
-      Log("nemu: %s at pc = " FMT_WORD,
-          (nemu_state.state == NEMU_ABORT ? ANSI_FMT("ABORT", ANSI_FG_RED) :
-           (nemu_state.halt_ret == 0 ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN) :
-            ANSI_FMT("HIT BAD TRAP", ANSI_FG_RED))),
-          nemu_state.halt_pc);
-      // fall through
-    case NEMU_QUIT: statistic();
+  case NEMU_END: case NEMU_ABORT:
+    Log("nemu: %s at pc = " FMT_WORD,
+      (nemu_state.state == NEMU_ABORT ? ANSI_FMT("ABORT", ANSI_FG_RED) :
+        (nemu_state.halt_ret == 0 ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN) :
+          ANSI_FMT("HIT BAD TRAP", ANSI_FG_RED))),
+      nemu_state.halt_pc);
+    // fall through
+  case NEMU_QUIT: statistic();
   }
 }
