@@ -10,8 +10,8 @@
 ### Questasim Makefile ###
 
 # Variables
-VSRC = $(wildcard vsrc/*.v vsrc/libs/*.v vsrc/sim/*.v)
-CSRC = $(wildcard dpisrc/*.c)
+VSRC = $(shell find vsrc -name "*.v")
+CSRC = $(shell find dpisrc -name "*.c")
 TOP = testbench_cpu
 WORK = work
 INCDIR = vsrc/include
