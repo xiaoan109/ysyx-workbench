@@ -116,4 +116,12 @@ module CPU_top(
     assign rd_data = MemtoReg ? MemRdata : ALUOut;
     assign PCA = PCAsrc ? imm : {{(`XLEN-3){1'b0}}, 3'h4};
     assign PCB = PCBsrc ? rs1_data : pc;
+
+    import "DPI-C" function bit check_finsih(input int finish_flag);
+    always @(*) begin
+        if(check_finsih(instr)) begin  //instr == ebreak.
+            $display("\n----------EBREAK: HIT !!%s!! TRAP!!---------------\n", ~|u_RegFile.rf[10] ? "GOOD":"BAD");
+            $finish;
+        end
+    end
 endmodule

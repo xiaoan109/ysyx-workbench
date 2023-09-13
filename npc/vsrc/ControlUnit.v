@@ -72,7 +72,6 @@ module ControlUnit(
     wire alu_xor;
     wire alu_or;
     wire alu_and;
-    wire alu_mul_div_rem;
 
     //RV32I
     assign is_lui    = (op == 7'h37);

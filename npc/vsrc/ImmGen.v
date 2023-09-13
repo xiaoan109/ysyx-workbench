@@ -1,6 +1,6 @@
 `include "defines.v"
 module ImmGen(
-        input [`INST_DW-1:0] instr,
+        input [`INST_DW-1:7] instr,
         input [2:0] ExtOp,
         output [`XLEN-1:0] imm
     );

@@ -35,7 +35,7 @@ module IDU(
                 );
 
     ImmGen u_ImmGen(
-               .instr(instr),
+               .instr(instr[31:7]),
                .ExtOp(ExtOp),
                .imm(imm)
            );
