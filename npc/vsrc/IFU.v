@@ -6,12 +6,12 @@ module IFU(
         output [`PC_DW-1:0] pc,
         output reg [`INST_DW-1:0] instr
     );
-    //instruction fetch
-    import "DPI-C" function void rtl_pmem_read(input int raddr, output int rdata);
-    always @(pc) begin
-        // $display("@%t, fetch instr", $time);
-        rtl_pmem_read(pc, instr);
-    end
+    // //instruction fetch
+    // import "DPI-C" function void rtl_pmem_read(input int raddr, output int rdata);
+    // always @(pc) begin
+    //     // $display("@%t, fetch instr", $time);
+    //     rtl_pmem_read(pc, instr);
+    // end
     Reg #(.WIDTH(`PC_DW), .RESET_VAL(`RESET_PC)) u_PC_Reg(
             .clk(clk),
             .rst(rst),

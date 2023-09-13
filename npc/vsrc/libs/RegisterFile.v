@@ -10,7 +10,7 @@ module RegisterFile #(parameter ADDR_WIDTH = 1, DATA_WIDTH = 1) (
     );
     reg [DATA_WIDTH-1:0] rf [0:2**ADDR_WIDTH-1];
     always @(posedge clk) begin
-        if (wen && waddr)
+        if (wen && waddr!=0)
             rf[waddr] <= wdata;
     end
     

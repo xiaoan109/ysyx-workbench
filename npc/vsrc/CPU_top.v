@@ -99,11 +99,6 @@ module CPU_top(
                      .rdata2(rs2_data)
                  );
 
-    // export rf values  
-    // TODO: fix dpi-c BUG
-    // import "DPI-C" function void set_gpr_ptr(input logic [31:0] a []);
-    // initial set_gpr_ptr(u_RegFile.rf);
-
     assign ALUA = ALUAsrc ? pc : rs1_data;
     MuxKey #(.NR_KEY(3), .KEY_LEN(2), .DATA_LEN(`XLEN)) u_ALUBsrc (
                .out(ALUB),
@@ -114,7 +109,8 @@ module CPU_top(
                         2'b10, imm
                     })
            );
-    //TODO
+    //TODO: Pass Regfile
+    
     assign MemAddr = ALUOut;
     assign MemWdata = rs2_data;
     assign rd_data = MemtoReg ? MemRdata : ALUOut;

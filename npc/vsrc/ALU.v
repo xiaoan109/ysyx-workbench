@@ -32,7 +32,7 @@ module ALU(
     assign ALUB_sub = ~ALUB+1;
 
     //adder
-    assign {carry_flag, result} = sub_add ? ALUA+~ALUB+1 : ALUA+ALUB;
+    assign {carry_flag, result} = sub_add ? ALUA+ALUB_sub : ALUA+ALUB;
     assign carry = sub_add^carry_flag;
     assign overflow = sub_add ? ((ALUA[`XLEN-1] == ALUB_sub[`XLEN-1]) && (result[`XLEN-1] != ALUA[`XLEN-1])) : ((ALUA[`XLEN-1] == ALUB[`XLEN-1]) && (result[`XLEN-1] != ALUA[`XLEN-1]));
     assign zero = ~(| result);

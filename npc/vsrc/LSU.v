@@ -43,37 +43,7 @@ module LSU(
                         3'b010, 4'b1111
                     })
            );
-
-    import "DPI-C" function void rtl_pmem_read(input int raddr, output int rdata);
-    import "DPI-C" function void rtl_pmem_write(input int waddr, input int wdata, input byte wmask);
-    // Using always @(*) and Reg causes a bug!
-    // Reg #(.WIDTH(2*`XLEN+4+1), .RESET_VAL(0)) u_WriteReg (
-    //         .clk(clk),
-    //         .rst(rst),
-    //         .din({MemAddr, MemWdata, mask, MemWrite}),
-    //         .dout({waddr, wdata, wmask, MemWr}),
-    //         .wen(1'b1)
-    //     );
-
-    // always @(*) begin
-    //     if (MemWr)
-    //         rtl_pmem_write(waddr, wdata, wmask);
-    // end
-
-
-    // TODO: FIX BUG and remove timing logic
-    always @(negedge clk) begin
-        if (MemRd)
-            rtl_pmem_read(raddr, rdata);
-        else
-            rdata = 0;
-    end
-
-    // TODO: Remove timing logic
-    always @(posedge clk) begin
-        if (MemWrite)
-            rtl_pmem_write(MemAddr, MemWdata, mask);
-    end
-
+    
+    //TODO: Load & Store logic
 
 endmodule
