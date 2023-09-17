@@ -12,7 +12,7 @@ module MuxKeyInternal #(parameter NR_KEY = 2, KEY_LEN = 1, DATA_LEN = 1, HAS_DEF
     wire [DATA_LEN-1:0] data_list [NR_KEY-1:0];
 
     generate
-        for (genvar n = 0; n < NR_KEY; n = n + 1) begin
+        for (genvar n = 0; n < NR_KEY; n = n + 1) begin: gen_block
             assign pair_list[n] = lut[PAIR_LEN*(n+1)-1 : PAIR_LEN*n];
             assign data_list[n] = pair_list[n][DATA_LEN-1:0];
             assign key_list[n]  = pair_list[n][PAIR_LEN-1:DATA_LEN];

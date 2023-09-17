@@ -10,3 +10,6 @@
 !.gitignore
 !README.md
 build/
+!csrc/Kconfig
+!csrc/memory/Kconfig
+!csrc/device/Kconfig
