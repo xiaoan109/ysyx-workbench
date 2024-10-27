@@ -2,7 +2,7 @@
 module ifu (
   input        [`CPU_WIDTH-1:0]  i_pc   ,
   input                          i_rst_n,
-  output       [31:0]            o_ins   
+  output       [`INS_WIDTH-1:0]            o_ins   
 );
 
   reg [`CPU_WIDTH-1:0] ins;

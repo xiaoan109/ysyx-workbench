@@ -156,7 +156,7 @@ config IRINGBUF
 
 config MTRACE
   depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
-  bool "Enable memory access tracer(TODO)"
+  bool "Enable memory access tracer"
   default n
 
 config MTRACE_START
@@ -173,6 +173,13 @@ config FTRACE
   depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
   bool "Enable function call-ret tracer(TODO)"
   default n
+
+config DTRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable device tracer(TODO)"
+  default n
+
+
 
 
 config DIFFTEST

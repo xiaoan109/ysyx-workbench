@@ -1,4 +1,4 @@
-#include <common.h>
+#include "include/include.h"
 
 uint32_t *dut_reg = NULL;
 uint32_t dut_pc;

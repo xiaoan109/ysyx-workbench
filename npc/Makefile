@@ -20,16 +20,29 @@ VERILATOR_FLAGS += --assert
 VERILATOR_FLAGS += --top-module top +incdir+vsrc/include
 VERILATOR_FLAGS += --build -Mdir $(BUILD_DIR)
 
+DIFFTEST =
+TRACE = 
+
 BUILD_DIR = $(NPC_HOME)/build
-LOG_DIR = $(NPC_HOME)/logs
 # SIM_TOPNAME = top
 WORK_DIR = $(shell pwd)
 INC_PATH := $(WORK_DIR)/csrc/include $(WORK_DIR)/csrc/isa/include $(INC_PATH)
 INCLUDES = $(addprefix -I, $(INC_PATH))
 C_FLAGS += -CFLAGS "$(INCLUDES)"
-C_FLAGS += -CFLAGS "-D__GUEST_ISA__=riscv32"
-IMAGE ?= ~/workspace/ysyx-workbench/am-kernels/tests/cpu-tests/build/dummy-riscv32e-npc.bin
-NPC_ARGS := --img $(IMAGE) --log $(LOG_DIR)/run.log --diff=$(NEMU_HOME)/build/riscv32-nemu-interpreter-so 
+
+IMAGE ?= $(HOME)/ysyx-workbench/am-kernels/tests/cpu-tests/build/dummy-riscv32e-npc.bin
+
+NPC_ARGS := --img $(IMAGE)
+
+ifneq ($(DIFFTEST),)
+C_FLAGS += -CFLAGS "-D DIFFTEST_ON"
+NPC_ARGS += --diff $(NEMU_HOME)/build/riscv32-nemu-interpreter-so
+endif
+
+ifneq ($(TRACE),)
+C_FLAGS += -CFLAGS "-D TRACE_ON"
+endif
+
 VSRC= $(shell find ./vsrc -name "*.v" -o -name "*.sv")
 CSRC+= $(shell find ./csrc -name "*.cpp" -o -name "*.c")
 
@@ -42,10 +55,7 @@ sim: compile
 	$(BUILD_DIR)/Vtop $(NPC_ARGS)
 
 wave:
-	gtkwave $(LOG_DIR)/testbench.vcd
-
-menuconfig:
-	cd csrc && make menuconfig && cd -
+	gtkwave $(BUILD_DIR)/sim.vcd
 
 clean:
-	rm -rf $(BUILD_DIR) $(LOG_DIR)
+	rm -rf $(BUILD_DIR)

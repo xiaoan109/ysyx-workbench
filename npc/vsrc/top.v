@@ -12,7 +12,7 @@ module top(
   );
   
   //2.cpu:  /////////////////////////////////////////////////
-  wire [31:0]           ins;             // ifu -> idu.
+  wire [`INS_WIDTH-1:0]           ins;             // ifu -> idu.
   wire [`CPU_WIDTH-1:0] pc;              // pcu -> ifu.
   wire [`REG_ADDRW-1:0] rs1id,rs2id,rdid;// idu -> reg.
   wire [`EXU_OPT_WIDTH-1:0] exu_opt;     // idu -> exu.
@@ -111,7 +111,7 @@ module top(
   always@(*)begin
     check_rst(rst_n_sync);
     if(check_finish(ins))begin  //ins == ebreak.
-      $display("\n----------EBREAK: HIT !!%s!! TRAP!!---------------\n",a0zero? "GOOD":"BAD");
+      $display("@%t, \n----------EBREAK: HIT !!%s!! TRAP!!---------------\n", $time, a0zero? "GOOD":"BAD");
       $finish;
     end
   end

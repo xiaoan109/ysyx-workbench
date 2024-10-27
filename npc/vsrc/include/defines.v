@@ -1,10 +1,11 @@
 // RISC-V32 XLEN
 `define CPU_WIDTH 32
+`define INS_WIDTH 32
 //Register File
 `define REG_COUNT (1<<`REG_ADDRW)
 `define REG_ADDRW 5
 // PC Reset Value
-`define RESET_PC 32'h80000000
+`define RESET_PC `CPU_WIDTH'h80000000
 
 // opcode -> ins type:
 `define TYPE_R          7'b0110011  //R type

@@ -15,8 +15,8 @@ module alu (
         `ALU_AND:   o_alu_res = i_src1 & i_src2;
         `ALU_OR:    o_alu_res = i_src1 | i_src2;
         `ALU_XOR:   o_alu_res = i_src1 ^ i_src2;
-        `ALU_SLL:   o_alu_res = i_src1 << i_src2[5:0];
-        `ALU_SRL:   o_alu_res = i_src1 >> i_src2[5:0];
+        `ALU_SLL:   o_alu_res = i_src1 << i_src2[4:0];
+        `ALU_SRL:   o_alu_res = i_src1 >> i_src2[4:0];
         `ALU_SRA:   o_alu_res = {{{32{i_src1[31]}},i_src1} >> i_src2[5:0]}[31:0];
         `ALU_SUBU:  {o_sububit,o_alu_res} = {1'b0,i_src1} - {1'b0,i_src2};  // use for sltu,bltu,bgeu
         default: ;
