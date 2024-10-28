@@ -179,6 +179,11 @@ config DTRACE
   bool "Enable device tracer(TODO)"
   default n
 
+config ETRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable exception tracer"
+  default n
+
 
 
 

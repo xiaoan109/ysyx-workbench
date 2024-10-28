@@ -34,6 +34,9 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
 			cpu.gpr[i] = diff_context->gpr[i];
 		}
 		cpu.pc = diff_context->pc;
+		for(int i=0; i<4; i++) {
+			cpu.csr[i] = diff_context->csr[i];
+		}
 	}
 	else {
 		for(int i=0; i<32; i++) {
@@ -41,6 +44,9 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
 			diff_context->gpr[i] = cpu.gpr[i];
 		}
 		diff_context->pc = cpu.pc;
+		for(int i=0; i<4; i++) {
+			diff_context->csr[i] = cpu.csr[i];
+		}
 	}
 }
 

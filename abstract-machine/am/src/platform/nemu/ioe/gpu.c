@@ -8,7 +8,8 @@ void __am_gpu_init() {
   int h = inw(VGACTL_ADDR);
   int w = inw(VGACTL_ADDR + 2);
   for (i = 0; i < w * h; i++) {
-    uint32_t color = (i/40000)<1 ? 0xFF0000 : (i/40000)<2 ? 0x00FF00 : 0x0000FF;
+    // uint32_t color = (i/40000)<1 ? 0xFF0000 : (i/40000)<2 ? 0x00FF00 : 0x0000FF;
+    uint32_t color = 0x0;
     outl(FB_ADDR + i * 4, color);
   }
   outl(SYNC_ADDR, 1);

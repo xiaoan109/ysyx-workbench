@@ -23,6 +23,10 @@ const char *regs[] = {
   "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
 
+const char *csrs[] = {
+  "mstatus", "mtvec", "mepc", "mcause"
+};
+
 void isa_reg_display() {
   printf("32 General Registers:\n");
   for(int i = 0; i < 32; i++) {
@@ -33,6 +37,10 @@ void isa_reg_display() {
   }
   printf("Program Counter:\n");
   printf(ANSI_FG_RED"%-3s: "ANSI_FG_MAGENTA FMT_WORD ANSI_NONE"\n", "$pc", cpu.pc);
+  printf("CSRs:\n");
+  for(int i = 0; i < ARRLEN(csrs); i++){
+    printf(ANSI_FG_GREEN"%-8s: "ANSI_FG_MAGENTA FMT_WORD" "ANSI_NONE"\n",csrs[i],cpu.csr[i]);
+  }
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
