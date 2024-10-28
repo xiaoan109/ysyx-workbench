@@ -12,3 +12,4 @@
 !.gitignore
 !init.sh
 /nvboard
+/am-kernels
