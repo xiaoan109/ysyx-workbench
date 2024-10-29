@@ -5,6 +5,7 @@
 
 extern uint32_t *dut_reg;
 extern uint32_t dut_pc;
+extern uint32_t *dut_csr;
 
 bool is_skip_ref = false;
 bool is_skip_ref_r = false;
@@ -45,26 +46,30 @@ void difftest_init(char *ref_so_file, long img_size) {
   ref_difftest_init();
   ref_difftest_memcpy(PMEM_START,guest_to_host(PMEM_START), img_size, DIFFTEST_TO_REF);
 
-  regfile dut = pack_dut_regfile(dut_reg, INST_START);
+  regfile dut = pack_dut_regfile(dut_reg, INST_START, dut_csr);
+  dut.csr[0] = 0x1800; //TODO: better way to init mstatus before hardware rst?
   ref_difftest_regcpy(&dut, DIFFTEST_TO_REF);
 }
 
 bool difftest_check() {
   regfile ref,dut;
-  dut = pack_dut_regfile(dut_reg,dut_pc);
   if (is_skip_ref_r) {
     // to skip the checking of an instruction, just copy the reg state to reference design
+    // printf("@PC= 0x%x, Skip ref reg copy and reg check!\n", dut_pc);
+    dut = pack_dut_regfile(dut_reg, dut_pc, dut_csr);
     ref_difftest_regcpy(&dut, DIFFTEST_TO_REF);
     is_skip_ref_r = false;
     return true;
   }
   ref_difftest_regcpy(&ref, DIFFTEST_TO_DUT);
+  dut = pack_dut_regfile(dut_reg, dut_pc, dut_csr);
   return checkregs(&ref, &dut);
 }
 
 void difftest_step() {
   if (is_skip_ref) {
     // to skip the checking of an instruction, just copy the reg state to reference design
+    // printf("@PC= 0x%x, Skip ref exec!\n", dut_pc);
     is_skip_ref_r = true;
     is_skip_ref = false;
     return;

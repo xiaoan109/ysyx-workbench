@@ -1,6 +1,6 @@
 `include "defines.v"
-module idu(
-  input        [`INS_WIDTH-1:0]               i_ins         ,
+module idu_normal(
+  input        [`INS_WIDTH-1:0]     i_ins         ,
   input                             i_rst_n       , //for sim.
   output reg   [`REG_ADDRW-1:0]     o_rdid        , //for reg.
   output reg   [`REG_ADDRW-1:0]     o_rs1id       , //for reg.
@@ -38,8 +38,8 @@ module idu(
       `TYPE_I_LOAD:   begin                   o_rs1id = rs1id;  o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{20{i_ins[31]}},i_ins[31:20]};                             end
       `TYPE_I_JALR:   begin                   o_rs1id = rs1id;  o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{20{i_ins[31]}},i_ins[31:20]};                             end
       `TYPE_I_EBRK:   begin                   o_rs1id = rs1id;  o_rdid = rdid;                  o_imm = {{20{i_ins[31]}},i_ins[31:20]};                             end
-      `TYPE_U_LUI:    begin                   o_rs1id = 0  ;    o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{0{i_ins[31]}},i_ins[31:12],12'b0};                       end //LUI: rdid = x0 + imm;
-      `TYPE_U_AUIPC:  begin                                     o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{0{i_ins[31]}},i_ins[31:12],12'b0};                       end
+      `TYPE_U_LUI:    begin                   o_rs1id = 0  ;    o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{0{i_ins[31]}},i_ins[31:12],12'b0};                        end //LUI: rdid = x0 + imm;
+      `TYPE_U_AUIPC:  begin                                     o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{0{i_ins[31]}},i_ins[31:12],12'b0};                        end
       `TYPE_J:        begin                                     o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{12{i_ins[31]}},i_ins[19:12],i_ins[20],i_ins[30:21],1'b0}; end
       default: ;
     endcase

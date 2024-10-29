@@ -16,6 +16,7 @@
 typedef struct {
   uint32_t x[32];
   uint32_t pc;
+  uint32_t csr[4];
 } regfile;
 
 uint8_t* guest_to_host(uint32_t paddr);
@@ -25,7 +26,7 @@ void pmem_write(uint32_t addr, uint32_t data, int len);
 void npc_init(int argc, char *argv[]);
 void print_regs();
 bool checkregs(regfile *ref, regfile *dut);
-regfile pack_dut_regfile(uint32_t *dut_reg,uint32_t pc);
+regfile pack_dut_regfile(uint32_t *dut_reg, uint32_t pc, uint32_t *dut_csr);
 
 #ifdef DIFFTEST_ON
 void difftest_init(char *ref_so_file, long img_size);

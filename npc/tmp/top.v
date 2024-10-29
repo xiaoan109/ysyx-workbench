@@ -76,10 +76,9 @@ module top (
   assign mcause_wdata = ecall ? `IRQ_ECALL : `CPU_WIDTH'b0;
   assign mstatus_wen = ecall | mret;
   assign mstatus_wdata = mstatus;
-
   csrfile u_csrfile (
     .i_clk          (i_clk),
-    .i_rst_n        (rst_n_sync),
+    .i_rst_n        (i_rst_n),
     .i_ren          (csrsren),
     .i_raddr        (csrsid),
     .o_rdata        (csrs),

@@ -18,6 +18,7 @@
 `define TYPE_U_LUI      7'b0110111  //U type for lui
 `define TYPE_U_AUIPC    7'b0010111  //U type for auipc
 `define TYPE_J          7'b1101111  //J type for jal
+`define TYPE_SYS        7'b1110011  //SYS type for ecall/ebreak/csrrw/csrrs/csrrc
 
 // function3:
 `define FUNC3_ADD_SUB           3'b000        //ADDI ADD SUB
@@ -51,6 +52,7 @@
 
 // EXU opreator:
 `define EXU_OPT_WIDTH   5
+`define EXU_NOP         `EXU_OPT_WIDTH'h0
 `define EXU_ADD         `EXU_OPT_WIDTH'h1
 `define EXU_SUB         `EXU_OPT_WIDTH'h2
 `define EXU_AND         `EXU_OPT_WIDTH'h3
@@ -88,4 +90,38 @@
 `define LSU_SB          `LSU_OPT_WIDTH'b0001    // 000 for FUNC3_LB_SB, 1 for store
 `define LSU_SH          `LSU_OPT_WIDTH'b0011    // 001 for FUNC3_LH_SH, 1 for store
 `define LSU_SW          `LSU_OPT_WIDTH'b0101    // 010 for FUNC3_LW_SW, 1 for store
-`define LSU_NOP         `LSU_OPT_WIDTH'b1111    //1111 for nop!! "lowest bit = 0" <=> "this is an load ins"
+`define LSU_NOP         `LSU_OPT_WIDTH'b1111    // 1111 for nop!! "lowest bit = 0" <=> "this is an load ins"
+
+
+// 4. for cpu csr ://////////////////////////////////////////////////////////////////////////////////////////
+
+// csr regfile define:
+`define CSR_COUNT       (1<<`CSR_ADDRW)
+`define CSR_ADDRW       12
+`define ADDR_MSTATUS    `CSR_ADDRW'h300
+`define ADDR_MTVEC      `CSR_ADDRW'h305
+`define ADDR_MEPC       `CSR_ADDRW'h341
+`define ADDR_MCAUSE     `CSR_ADDRW'h342
+
+// csr fun3:
+`define FUNC3_ECALL     3'b000  //for ecall
+`define FUNC3_CSRRW     3'b001
+`define FUNC3_CSRRS     3'b010
+`define FUNC3_CSRRC     3'b011
+`define FUNC3_CSRRWI    3'b101
+`define FUNC3_CSRRSI    3'b110
+`define FUNC3_CSRRCI    3'b111
+
+// csr opreator for exu:
+`define CSR_OPT_WIDTH   2
+`define CSR_NOP         `CSR_OPT_WIDTH'b00
+`define CSR_RW          `CSR_OPT_WIDTH'b01
+`define CSR_RS          `CSR_OPT_WIDTH'b10
+`define CSR_RC          `CSR_OPT_WIDTH'b11
+
+`define CSR_SEL_REG     1'b0
+`define CSR_SEL_IMM     1'b1
+
+// intr define:
+`define IRQ_ECALL       `CPU_WIDTH'd11
+
