@@ -1,4 +1,4 @@
-`include "defines.v"
+`include "defines.vh"
 module csrfile (
   input i_clk,
   input i_rst_n,
@@ -26,10 +26,10 @@ module csrfile (
 );
 
   // 1. csr reg file: //////////////////////////////////////////////////////////////////
-  reg [`CPU_WIDTH-1:0] mepc;  // Machine exception program counter
-  reg [`CPU_WIDTH-1:0] mtvec;  // Machine trap-handler base address
-  reg [`CPU_WIDTH-1:0] mcause;  // Machine trap cause
-  reg [`CPU_WIDTH-1:0] mstatus;  // Machine status register
+  wire [`CPU_WIDTH-1:0] mepc;  // Machine exception program counter
+  wire [`CPU_WIDTH-1:0] mtvec;  // Machine trap-handler base address
+  wire [`CPU_WIDTH-1:0] mcause;  // Machine trap cause
+  wire [`CPU_WIDTH-1:0] mstatus;  // Machine status register
 
   // 2. read csr  reg file: ////////////////////////////////////////////////////////////
   wire ren_mepc = i_ren & (i_raddr == `ADDR_MEPC);
@@ -98,7 +98,8 @@ module csrfile (
 
   stdreg #(
     .WIDTH    (`CPU_WIDTH),
-    .RESET_VAL(`CPU_WIDTH'h1800)
+    // .RESET_VAL(`CPU_WIDTH'h1800)
+    .RESET_VAL(`CPU_WIDTH'b0)
   ) reg_mstatus (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),

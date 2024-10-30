@@ -1,3 +1,4 @@
+`include "defines.vh"
 module alu (
   input         [`CPU_WIDTH-1:0]      i_src1    ,
   input         [`CPU_WIDTH-1:0]      i_src2    ,

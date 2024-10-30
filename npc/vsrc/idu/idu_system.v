@@ -1,4 +1,4 @@
-`include "defines.v"
+`include "defines.vh"
 module idu_system (
     input  [    `INS_WIDTH-1:7] i_ins, // Bits of signal are not used: 'i_ins'[6:0]
     output [    `CSR_ADDRW-1:0] o_csrsid,

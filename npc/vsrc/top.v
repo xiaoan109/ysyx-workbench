@@ -1,4 +1,4 @@
-`include "defines.v"
+`include "defines.vh"
 module top (
   input i_clk,
   input i_rst_n
@@ -55,6 +55,16 @@ module top (
   wire [`CPU_WIDTH-1:0] mstatus;
   wire [`CPU_WIDTH-1:0] mepc;
 
+  //handshake signals
+  wire ifu_valid;
+  wire idu_ready;
+  wire idu_valid;
+  wire exu_ready;
+  wire exu_valid;
+  wire lsu_ready;
+  wire lsu_valid;
+  wire wbu_ready;
+
 
   regfile u_regfile (
     .i_clk   (i_clk),
@@ -98,9 +108,11 @@ module top (
   );
 
   ifu u_ifu (
-    .i_pc   (pc),
-    .i_rst_n(rst_n_sync),
-    .o_ins  (ins)
+    .i_pc        (pc),
+    .i_rst_n     (rst_n_sync),
+    .o_ins       (ins),
+    .o_post_valid(ifu_valid),
+    .i_post_ready(idu_ready)
   );
 
   idu u_idu (
@@ -125,39 +137,53 @@ module top (
     .o_csrdid     (csrdid),
     .o_csrdwen    (csrdwen),
     .o_ecall      (ecall),
-    .o_mret       (mret)
+    .o_mret       (mret),
+    .i_pre_valid  (ifu_valid),
+    .o_pre_ready  (idu_ready),
+    .o_post_valid (idu_valid),
+    .i_post_ready (exu_ready)
   );
 
   exu u_exu (
-    .i_pc     (pc),
-    .i_rs1    (rs1),
-    .i_rs2    (rs2),
-    .i_imm    (imm),
-    .i_src_sel(exu_src_sel),
-    .i_opt    (exu_opt),
-    .o_exu_res(exu_res),
-    .o_zero   (zero),
-    .i_sysins (sysins),
-    .i_csrs   (csrs),
-    .i_csr_opt(excsropt),
-    .i_csr_src(excsrsrc),
-    .o_csrd   (csrd)
+    .i_pc        (pc),
+    .i_rs1       (rs1),
+    .i_rs2       (rs2),
+    .i_imm       (imm),
+    .i_src_sel   (exu_src_sel),
+    .i_opt       (exu_opt),
+    .o_exu_res   (exu_res),
+    .o_zero      (zero),
+    .i_sysins    (sysins),
+    .i_csrs      (csrs),
+    .i_csr_opt   (excsropt),
+    .i_csr_src   (excsrsrc),
+    .o_csrd      (csrd),
+    .i_pre_valid (idu_valid),
+    .o_pre_ready (exu_ready),
+    .o_post_valid(exu_valid),
+    .i_post_ready(lsu_ready)
   );
 
   lsu u_lsu (
-    .i_clk  (i_clk),
-    .i_rst_n(rst_n_sync),
-    .i_opt  (lsu_opt),
-    .i_addr (exu_res),
-    .i_regst(rs2),
-    .o_regld(lsu_res)
+    .i_clk       (i_clk),
+    .i_rst_n     (rst_n_sync),
+    .i_opt       (lsu_opt),
+    .i_addr      (exu_res),
+    .i_regst     (rs2),
+    .o_regld     (lsu_res),
+    .i_pre_valid (exu_valid),
+    .o_pre_ready (lsu_ready),
+    .o_post_valid(lsu_valid),
+    .i_post_ready(wbu_ready)
   );
 
   wbu u_wbu (
-    .i_exu_res(exu_res),
-    .i_lsu_res(lsu_res),
-    .i_ld_en  (~lsu_opt[0]),
-    .o_rd     (rd)
+    .i_exu_res  (exu_res),
+    .i_lsu_res  (lsu_res),
+    .i_ld_en    (~lsu_opt[0]),
+    .o_rd       (rd),
+    .i_pre_valid(lsu_valid),
+    .o_pre_ready(wbu_ready)
   );
 
   pcu u_pcu (

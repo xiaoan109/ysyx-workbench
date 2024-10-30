@@ -1,4 +1,4 @@
-`include "defines.v"
+`include "defines.vh"
 module regfile (
   input                         i_clk   ,
   input                         i_wen   ,

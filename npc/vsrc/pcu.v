@@ -1,4 +1,4 @@
-`include "defines.v"
+`include "defines.vh"
 module pcu (
   input                   i_clk,
   input                   i_rst_n,

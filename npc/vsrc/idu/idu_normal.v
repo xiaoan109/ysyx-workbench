@@ -1,4 +1,4 @@
-`include "defines.v"
+`include "defines.vh"
 module idu_normal(
   input        [`INS_WIDTH-1:0]     i_ins         ,
   input                             i_rst_n       , //for sim.

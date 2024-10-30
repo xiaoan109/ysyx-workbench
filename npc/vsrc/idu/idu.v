@@ -1,4 +1,4 @@
-`include "defines.v"
+`include "defines.vh"
 module idu (
   input  [    `INS_WIDTH-1:0] i_ins,
   input                       i_rst_n,
@@ -22,7 +22,12 @@ module idu (
   output [    `CSR_ADDRW-1:0] o_csrdid,
   output                      o_csrdwen,
   output                      o_ecall,
-  output                      o_mret
+  output                      o_mret,
+  //handshake
+  input                       i_pre_valid,
+  output                      o_pre_ready,
+  output                      o_post_valid,
+  input                       i_post_ready
 );
 
   // wire [2:0] func3;
@@ -106,6 +111,9 @@ module idu (
 
   assign o_ecall = o_sysins & !(|i_ins[31:7]);
   assign o_mret = o_sysins & !(|i_ins[31:30]) & (&i_ins[29:28]) & !(|i_ins[27:22]) & i_ins[21] & !(|i_ins[20:7]);
+
+  assign o_pre_ready = !o_post_valid || i_post_ready;
+  assign o_post_valid = i_pre_valid;
 
 
 endmodule

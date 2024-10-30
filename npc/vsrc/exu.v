@@ -1,4 +1,4 @@
-`include "defines.v"
+`include "defines.vh"
 module exu (
   input      [    `CPU_WIDTH-1:0] i_pc,
   input      [    `CPU_WIDTH-1:0] i_rs1,
@@ -12,7 +12,12 @@ module exu (
   input                           i_csr_src,
   output reg [    `CPU_WIDTH-1:0] o_exu_res,
   output                          o_zero,
-  output     [    `CPU_WIDTH-1:0] o_csrd
+  output     [    `CPU_WIDTH-1:0] o_csrd,
+  //handshake
+  input                           i_pre_valid,
+  output                          o_pre_ready,
+  output                          o_post_valid,
+  input                           i_post_ready
 );
 
   wire [`CPU_WIDTH-1:0] sys_rs1, sys_csr, sys_csrres, sys_rdres;
@@ -132,5 +137,9 @@ module exu (
 
   assign o_exu_res = i_sysins ? sys_rdres : int_res;
   assign o_csrd = sys_csrres;
+
+
+  assign o_pre_ready = !o_post_valid || i_post_ready;
+  assign o_post_valid = i_pre_valid;
 
 endmodule
