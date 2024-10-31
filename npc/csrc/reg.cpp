@@ -41,13 +41,35 @@ bool checkregs(regfile *ref, regfile *dut) {
   return true;
 }
 
-void print_regs(){
-  printf("dut pc = 0x%x\n",dut_pc);
+void print_regs(regfile *ref, regfile *dut){
+  printf("---------------DUT REGS---------------\n");
+  printf("$pc = 0x%x\n",dut->pc);
   for (int i = 0; i < 32; i++) {
-    printf("dut reg %3s = 0x%x\n",regs[i],dut_reg[i]);
+    printf("%3s = 0x%08x\t",regs[i],dut->x[i]);
+    if(i % 4==3) {
+      printf("\n");
+    }
   }
   for(int i = 0; i < 4; i++){
-    printf("dut csr %3s = 0x%x\n",csrs[i],dut_csr[i]);
+    printf("%8s = 0x%08x\t",csrs[i],dut->csr[i]);
+     if(i % 4==3) {
+      printf("\n");
+    }
+  }
+
+  printf("---------------REF REGS---------------\n");
+  printf("$pc = 0x%x\n",ref->pc);
+  for (int i = 0; i < 32; i++) {
+    printf("%3s = 0x%08x\t",regs[i],ref->x[i]);
+    if(i % 4==3) {
+      printf("\n");
+    }
+  }
+  for(int i = 0; i < 4; i++){
+    printf("%8s = 0x%08x\t",csrs[i],ref->csr[i]);
+     if(i % 4==3) {
+      printf("\n");
+    }
   }
 }
 

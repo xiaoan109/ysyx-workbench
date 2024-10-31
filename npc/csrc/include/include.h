@@ -5,11 +5,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <macro.h>
 
 #define INST_START 0x80000000
 #define PMEM_START 0x80000000
 #define PMEM_END   0x87ffffff
 #define PMEM_MSIZE (PMEM_END+1-PMEM_START)
+
+#ifndef DEBUG_TIME 
+#define DEBUG_TIME -1
+#endif
 
 // #define DIFFTEST_ON  1
 
@@ -24,7 +29,7 @@ uint32_t host_to_guest(uint8_t *haddr);
 uint32_t pmem_read(uint32_t addr, int len);
 void pmem_write(uint32_t addr, uint32_t data, int len);
 void npc_init(int argc, char *argv[]);
-void print_regs();
+void print_regs(regfile *ref, regfile *dut);
 bool checkregs(regfile *ref, regfile *dut);
 regfile pack_dut_regfile(uint32_t *dut_reg, uint32_t pc, uint32_t *dut_csr);
 

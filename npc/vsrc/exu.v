@@ -139,7 +139,7 @@ module exu (
   assign o_csrd = sys_csrres;
 
 
-  assign o_pre_ready = !o_post_valid || i_post_ready;
+  assign o_pre_ready = i_post_ready;
   assign o_post_valid = i_pre_valid;
 
 endmodule

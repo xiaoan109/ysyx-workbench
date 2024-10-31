@@ -1,7 +1,7 @@
 #include "include/include.h"
 #include <dlfcn.h>
 
-#ifdef  DIFFTEST_ON
+IFDEF(DIFFTEST_ON, 
 
 extern uint32_t *dut_reg;
 extern uint32_t dut_pc;
@@ -53,6 +53,7 @@ void difftest_init(char *ref_so_file, long img_size) {
 
 bool difftest_check() {
   regfile ref,dut;
+  uint8_t ret;
   if (is_skip_ref_r) {
     // to skip the checking of an instruction, just copy the reg state to reference design
     // printf("@PC= 0x%x, Skip ref reg copy and reg check!\n", dut_pc);
@@ -63,7 +64,11 @@ bool difftest_check() {
   }
   ref_difftest_regcpy(&ref, DIFFTEST_TO_DUT);
   dut = pack_dut_regfile(dut_reg, dut_pc, dut_csr);
-  return checkregs(&ref, &dut);
+  ret = checkregs(&ref, &dut);
+  if(!ret) {
+    print_regs(&ref, &dut);
+  }    
+  return ret;
 }
 
 void difftest_step() {
@@ -77,4 +82,4 @@ void difftest_step() {
   ref_difftest_exec(1);
 }
 
-#endif
+)

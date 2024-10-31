@@ -12,7 +12,8 @@ module pcu (
   input                   i_mret,
   input  [`CPU_WIDTH-1:0] i_mtvec,
   input  [`CPU_WIDTH-1:0] i_mepc,
-  output [`CPU_WIDTH-1:0] o_pc
+  output [`CPU_WIDTH-1:0] o_pc,
+  input                   i_pre_valid
 );
 
   wire [`CPU_WIDTH-1:0] pc_next;
@@ -29,7 +30,7 @@ module pcu (
   ) u_stdreg (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
-    .i_wen  (1'b1),
+    .i_wen  (i_pre_valid),
     .i_din  (pc_next),
     .o_dout (o_pc)
   );

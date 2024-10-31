@@ -2,10 +2,9 @@
 #include "verilated_dpi.h"
 
 static uint64_t us;
+extern uint32_t dut_pc;
 
-#ifdef DIFFTEST_ON
-extern bool is_skip_ref;
-#endif
+IFDEF(DIFFTEST_ON, extern bool is_skip_ref);
 
 extern bool rst_n_sync;
 extern "C" void check_rst(svBit rst_flag){
@@ -22,41 +21,37 @@ extern "C" svBit check_finish(int ins){
     return 0;
 }
 
-extern "C" void rtl_pmem_write(uint32_t waddr, uint32_t wdata, uint8_t wmask){
-  // printf("waddr = 0x%08x,wdata = 0x%08x,wmask = 0x%04x\n",waddr,wdata,wmask);
+extern "C" void rtl_pmem_write(uint32_t waddr, uint32_t wdata, const svBitVecVal* wmask, svBit wen){
+  IFDEF(MTRACE_ON, if(wen) printf("waddr = 0x%08x,wdata = 0x%08x,wmask = 0x%x\n", waddr,wdata,*wmask));
   //waddr = waddr & ~0x3u;  //clear low 2bit for 4byte align.
-
-  if (waddr == 0xa0000000 + 0x0000000){ //UART
-#ifdef DIFFTEST_ON
-    is_skip_ref = true;
-#endif
-    uint8_t ch = (uint8_t)(wdata & 0xff);
-    putc(ch, stderr);
+  if (waddr == 0xa0000000 + 0x0000000 && wen){ //UART
+    IFDEF(DIFFTEST_ON, is_skip_ref = true);
+    if(*wmask) {
+      uint8_t ch = (uint8_t)(wdata & 0xff);
+      putc(ch, stderr);
+    }
     return;
   }
 
-  switch (wmask)
-  {
-    case 1:   pmem_write(waddr, wdata, 1); break; // 0000_0001, 1byte.
-    case 3:   pmem_write(waddr, wdata, 2); break; // 0000_0011, 2byte.
-    case 15:  pmem_write(waddr, wdata, 4); break; // 0000_1111, 4byte.
-    default:  break;
+  if(wen) {
+    switch (*wmask) {
+      case 1:   pmem_write(waddr, wdata, 1); break; // 0001, 1byte.
+      case 3:   pmem_write(waddr, wdata, 2); break; // 0011, 2byte.
+      case 15:  pmem_write(waddr, wdata, 4); break; // 1111, 4byte.
+      default:  break;
+    }
   }
 }
 
 extern "C" void rtl_pmem_read(uint32_t raddr,uint32_t *rdata, svBit ren){
-  //raddr = raddr & ~0x3u;  //clear low 2bit for 4byte align.
+  IFDEF(MTRACE_ON, raddr = raddr & ~0x3u);  //clear low 2bit for 4byte align.
   if (raddr == 0xa0000000 + 0x0002000 && ren){ //TIMER
-#ifdef DIFFTEST_ON
-    is_skip_ref = true;
-#endif
+    IFDEF(DIFFTEST_ON, is_skip_ref = true);
     us = get_time();
     *rdata = (uint32_t)us;
   }
   else if (raddr == 0xa0000000 + 0x0002000 + 0x4 && ren){ //TIMER
-#ifdef DIFFTEST_ON
-    is_skip_ref = true;
-#endif
+    IFDEF(DIFFTEST_ON, is_skip_ref = true);
     *rdata = (uint32_t)(us >> 32);
   }
   else if (ren && raddr>=PMEM_START && raddr<=PMEM_END){
@@ -70,6 +65,8 @@ extern "C" void rtl_pmem_read(uint32_t raddr,uint32_t *rdata, svBit ren){
 extern uint32_t *dut_reg;
 extern uint32_t dut_pc;
 extern uint32_t *dut_csr;
+extern bool dut_status;
+
 extern "C" void set_reg_ptr(const svOpenArrayHandle r) {
   dut_reg = (uint32_t *)(((VerilatedDpiOpenVar*)r)->datap());
 }
@@ -81,6 +78,10 @@ extern "C" void set_csr_ptr(const svOpenArrayHandle r) {
 
 extern "C" void diff_read_pc(uint32_t rtl_pc){
   dut_pc = rtl_pc;
+}
+
+extern "C" void diff_read_status(svBit rtl_status){
+  dut_status = rtl_status;
 }
 
 

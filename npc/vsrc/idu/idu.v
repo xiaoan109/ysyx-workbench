@@ -112,7 +112,7 @@ module idu (
   assign o_ecall = o_sysins & !(|i_ins[31:7]);
   assign o_mret = o_sysins & !(|i_ins[31:30]) & (&i_ins[29:28]) & !(|i_ins[27:22]) & i_ins[21] & !(|i_ins[20:7]);
 
-  assign o_pre_ready = !o_post_valid || i_post_ready;
+  assign o_pre_ready = i_post_ready;
   assign o_post_valid = i_pre_valid;
 
 

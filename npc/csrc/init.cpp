@@ -58,8 +58,6 @@ void npc_init(int argc, char *argv[]) {
   /* Load the image to memory. This will overwrite the built-in image. */
   long img_size = load_img(img_file);
 
-#ifdef  DIFFTEST_ON
   /* Initialize differential testing. */
-  difftest_init(diff_so_file, img_size);
-#endif
+  IFDEF(DIFFTEST_ON, difftest_init(diff_so_file, img_size));
 }

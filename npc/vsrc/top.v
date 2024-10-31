@@ -28,7 +28,8 @@ module top (
   wire brch, jal, jalr;  // idu -> pcu.
 
   wire [`CPU_WIDTH-1:0] rd;  // wbu -> reg.
-  wire rdwen;  // idu -> reg.
+  wire idu_rdwen;  // idu -> wbu.
+  wire wbu_rdwen;  //wbu ->reg.
 
   wire a0zero;  // use for sim, good trap or bad trap. if a0 is zero, a0zero == 1
 
@@ -68,7 +69,7 @@ module top (
 
   regfile u_regfile (
     .i_clk   (i_clk),
-    .i_wen   (rdwen),
+    .i_wen   (wbu_rdwen),
     .i_waddr (rdid),
     .i_wdata (rd),
     .i_raddr1(rs1id),
@@ -108,8 +109,9 @@ module top (
   );
 
   ifu u_ifu (
-    .i_pc        (pc),
+    .i_clk       (i_clk),
     .i_rst_n     (rst_n_sync),
+    .i_pc        (pc),
     .o_ins       (ins),
     .o_post_valid(ifu_valid),
     .i_post_ready(idu_ready)
@@ -121,7 +123,7 @@ module top (
     .o_rdid       (rdid),
     .o_rs1id      (rs1id),
     .o_rs2id      (rs2id),
-    .o_rdwen      (rdwen),
+    .o_rdwen      (idu_rdwen),
     .o_imm        (imm),
     .o_exu_src_sel(exu_src_sel),
     .o_exu_opt    (exu_opt),
@@ -178,40 +180,60 @@ module top (
   );
 
   wbu u_wbu (
+    .i_clk      (i_clk),
+    .i_rst_n    (rst_n_sync),
     .i_exu_res  (exu_res),
     .i_lsu_res  (lsu_res),
     .i_ld_en    (~lsu_opt[0]),
+    .i_rdwen    (idu_rdwen),
     .o_rd       (rd),
     .i_pre_valid(lsu_valid),
-    .o_pre_ready(wbu_ready)
+    .i_exu_valid(exu_valid),
+    .o_pre_ready(wbu_ready),
+    .o_rdwen    (wbu_rdwen)
   );
 
   pcu u_pcu (
-    .i_clk  (i_clk),
-    .i_rst_n(rst_n_sync),
-    .i_brch (brch),
-    .i_jal  (jal),
-    .i_jalr (jalr),
-    .i_zero (zero),
-    .i_rs1  (rs1),
-    .i_imm  (imm),
-    .i_ecall(ecall),
-    .i_mret (mret),
-    .i_mtvec(mtvec),
-    .i_mepc (mepc),
-    .o_pc   (pc)
+    .i_clk      (i_clk),
+    .i_rst_n    (rst_n_sync),
+    .i_brch     (brch),
+    .i_jal      (jal),
+    .i_jalr     (jalr),
+    .i_zero     (zero),
+    .i_rs1      (rs1),
+    .i_imm      (imm),
+    .i_ecall    (ecall),
+    .i_mret     (mret),
+    .i_mtvec    (mtvec),
+    .i_mepc     (mepc),
+    .o_pc       (pc),
+    .i_pre_valid(lsu_valid)
   );
 
   //3.sim:  ////////////////////////////////////////////////////////
+  wire [`INS_WIDTH-1:0] ins_r;
+
   import "DPI-C" function void check_rst(input bit rst_flag);
   import "DPI-C" function bit check_finish(input int finish_flag);
   always @(*) begin
     check_rst(rst_n_sync);
-    if (check_finish(ins)) begin  //ins == ebreak.
+    if (check_finish(ins_r)) begin  //ins == ebreak.
       $display("@%t, \n----------EBREAK: HIT !!%s!! TRAP!!---------------\n", $time,
                a0zero ? "GOOD" : "BAD");
       $finish;
     end
   end
+
+  //multi-cycle cpu: 3
+  stdreg #(
+    .WIDTH(`INS_WIDTH),
+    .RESET_VAL(`INS_WIDTH'b0)
+  ) u_std_reg (
+    .i_clk  (i_clk),
+    .i_rst_n(rst_n_sync),
+    .i_wen  (1'b1),
+    .i_din  (ins),
+    .o_dout (ins_r)
+  );
 
 endmodule

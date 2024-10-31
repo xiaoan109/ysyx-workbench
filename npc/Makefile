@@ -39,8 +39,16 @@ C_FLAGS += -CFLAGS "-D DIFFTEST_ON"
 NPC_ARGS += --diff $(NEMU_HOME)/build/riscv32-nemu-interpreter-so
 endif
 
-ifneq ($(TRACE),)
+ifneq ($(TRACE),)  #wave trace
 C_FLAGS += -CFLAGS "-D TRACE_ON"
+endif
+
+ifneq ($(MAXCYCLE), )
+C_FLAGS += -CFLAGS "-D DEBUG_TIME=$(MAXCYCLE)"
+endif
+
+ifneq ($(MTRACE), ) #mem trace
+C_FLAGS += -CFLAGS "-D MTRACE_ON"
 endif
 
 VSRC= $(shell find ./vsrc -name "*.v" -o -name "*.sv")
@@ -55,7 +63,7 @@ sim: compile
 	$(BUILD_DIR)/Vtop $(NPC_ARGS)
 
 wave:
-	gtkwave $(BUILD_DIR)/sim.vcd
+	gtkwave $(BUILD_DIR)/sim.vcd &
 
 clean:
 	rm -rf $(BUILD_DIR)

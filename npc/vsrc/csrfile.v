@@ -116,7 +116,7 @@ module csrfile (
     sim_csr[2] = mepc;
     sim_csr[3] = mcause;
   end
-  import "DPI-C" function void set_csr_ptr(input logic [31:0] a[]);
+  import "DPI-C" function void set_csr_ptr(input bit [31:0] a[]);
   initial set_csr_ptr(sim_csr);
 
 endmodule
