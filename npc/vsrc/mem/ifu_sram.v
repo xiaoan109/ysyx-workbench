@@ -16,7 +16,7 @@ module ifu_sram (
     input  bit ren
   );
   always @(*) begin
-    rtl_pmem_read(i_raddr, rdata_pre, i_ren && i_rst_n);
+    rtl_pmem_read(i_raddr, rdata_pre, i_ren);
   end
 
   stdreg #(

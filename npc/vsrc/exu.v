@@ -73,7 +73,7 @@ module exu (
   wire [    `CPU_WIDTH-1:0] alu_res;
   wire                      sububit;  // use for sltu,bltu,bgeu
   wire                      less;
-  assign less = src2=={1'b1, {(`CPU_WIDTH-1){1'b0}}} ? 0 : src1=={1'b1, {(`CPU_WIDTH-1){1'b0}}} ? 1 : ~src1[`CPU_WIDTH-1]&src2[`CPU_WIDTH-1] ? 0 : src1[`CPU_WIDTH-1]&~src2[`CPU_WIDTH-1] ? 1 : alu_res[`CPU_WIDTH-1];
+  assign less = src2==`INT_MAX ? 0 : src1==`INT_MAX ? 1 : src1[`CPU_WIDTH-1]^src2[`CPU_WIDTH-1] ? src1[`CPU_WIDTH-1] : alu_res[`CPU_WIDTH-1];
   reg [`CPU_WIDTH-1:0] int_res;
 
   always @(*) begin

@@ -39,7 +39,7 @@ C_FLAGS += -CFLAGS "-D DIFFTEST_ON"
 NPC_ARGS += --diff $(NEMU_HOME)/build/riscv32-nemu-interpreter-so
 endif
 
-ifneq ($(TRACE),)  #wave trace
+ifneq ($(WAVE),)  #wave trace
 C_FLAGS += -CFLAGS "-D TRACE_ON"
 endif
 
@@ -54,6 +54,8 @@ endif
 VSRC= $(shell find ./vsrc -name "*.v" -o -name "*.sv")
 CSRC+= $(shell find ./csrc -name "*.cpp" -o -name "*.c")
 
+WAVE_CFG = $(shell find . -name "*.gtkw")
+
 
 compile:
 	@echo "runing simulation for test module "
@@ -63,7 +65,11 @@ sim: compile
 	$(BUILD_DIR)/Vtop $(NPC_ARGS)
 
 wave:
+ifneq ($(WAVE_CFG), )
+	gtkwave $(BUILD_DIR)/sim.vcd -a $(WAVE_CFG) &
+else
 	gtkwave $(BUILD_DIR)/sim.vcd &
+endif
 
 clean:
 	rm -rf $(BUILD_DIR)

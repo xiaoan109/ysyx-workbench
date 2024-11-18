@@ -1,5 +1,5 @@
 `include "defines.vh"
-module pcu (
+module bru (
   input                   i_clk,
   input                   i_rst_n,
   input                   i_brch,
@@ -13,10 +13,12 @@ module pcu (
   input  [`CPU_WIDTH-1:0] i_mtvec,
   input  [`CPU_WIDTH-1:0] i_mepc,
   output [`CPU_WIDTH-1:0] o_pc,
-  input                   i_pre_valid
+  input                   i_lsu_valid,
+  input                   i_idu_valid
 );
 
   wire [`CPU_WIDTH-1:0] pc_next;
+  wire [`CPU_WIDTH-1:0] pc_reg;
   wire                  except;
   wire [`CPU_WIDTH-1:0] except_pc;
 
@@ -26,12 +28,24 @@ module pcu (
 
   stdreg #(
     .WIDTH    (`CPU_WIDTH),
-    .RESET_VAL(`RESET_PC)
-  ) u_stdreg (
+    .RESET_VAL(`CPU_WIDTH'b0)
+  ) u_pc_reg (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
-    .i_wen  (i_pre_valid),
+    .i_wen  (i_idu_valid),
     .i_din  (pc_next),
+    .o_dout (pc_reg)
+  );
+
+
+  stdreg #(
+    .WIDTH    (`CPU_WIDTH),
+    .RESET_VAL(`RESET_PC)
+  ) u_next_pc_reg (
+    .i_clk  (i_clk),
+    .i_rst_n(i_rst_n),
+    .i_wen  (i_lsu_valid),
+    .i_din  (pc_reg),
     .o_dout (o_pc)
   );
 

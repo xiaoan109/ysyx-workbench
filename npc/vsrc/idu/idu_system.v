@@ -1,6 +1,6 @@
 `include "defines.vh"
 module idu_system (
-    input  [    `INS_WIDTH-1:7] i_ins, // Bits of signal are not used: 'i_ins'[6:0]
+    input  [    `INS_WIDTH-1:7] i_instr, // Bits of signal are not used: 'i_instr'[6:0]
     output [    `CSR_ADDRW-1:0] o_csrsid,
     output                      o_csrsren,
     output [    `REG_ADDRW-1:0] o_rs1id,
@@ -17,12 +17,12 @@ module idu_system (
   wire [4:0] uimm;
 
   
-  assign o_csrsid = i_ins[31:20];
-  assign o_csrdid = i_ins[31:20];
-  assign o_rs1id  = i_ins[19:15];
-  assign uimm     = i_ins[19:15];
-  assign func3    = i_ins[14:12];
-  assign o_rdid   = i_ins[11: 7];
+  assign o_csrsid = i_instr[31:20];
+  assign o_csrdid = i_instr[31:20];
+  assign o_rs1id  = i_instr[19:15];
+  assign uimm     = i_instr[19:15];
+  assign func3    = i_instr[14:12];
+  assign o_rdid   = i_instr[11: 7];
 
   wire csrrw  = (func3 == `FUNC3_CSRRW );
   wire csrrs  = (func3 == `FUNC3_CSRRS );

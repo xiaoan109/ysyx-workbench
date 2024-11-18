@@ -1,6 +1,6 @@
 `include "defines.vh"
 module idu (
-  input  [    `INS_WIDTH-1:0] i_ins,
+  input  [    `INS_WIDTH-1:0] i_instr,
   input                       i_rst_n,
   output [    `REG_ADDRW-1:0] o_rdid,         //for reg.
   output [    `REG_ADDRW-1:0] o_rs1id,        //for reg.
@@ -33,8 +33,8 @@ module idu (
   // wire [2:0] func3;
   wire [6:0] opcode;
 
-  // assign func3 = i_ins[14:12];
-  assign opcode   = i_ins[6:0];
+  // assign func3 = i_instr[14:12];
+  assign opcode   = i_instr[6:0];
   assign o_sysins = (opcode == `TYPE_SYS);
 
 
@@ -58,7 +58,7 @@ module idu (
   wire                  nom_brch;
 
   idu_normal u_idu_normal (
-    .i_ins        (i_ins),
+    .i_instr        (i_instr),
     .i_rst_n      (i_rst_n),      //for sim.
     .o_rdid       (nom_rdid),     //for reg.
     .o_rs1id      (nom_rs1id),    //for reg.
@@ -75,7 +75,7 @@ module idu (
 
 
   idu_system u_idu_system (
-    .i_ins     (i_ins[`INS_WIDTH-1:7]),
+    .i_instr     (i_instr[`INS_WIDTH-1:7]),
     .o_csrsid  (sys_csrsid),
     .o_csrsren (sys_csrsren),
     .o_rs1id   (sys_rs1id),
@@ -109,8 +109,8 @@ module idu (
   assign o_brch = o_sysins ? 1'b0 : nom_brch;
 
 
-  assign o_ecall = o_sysins & !(|i_ins[31:7]);
-  assign o_mret = o_sysins & !(|i_ins[31:30]) & (&i_ins[29:28]) & !(|i_ins[27:22]) & i_ins[21] & !(|i_ins[20:7]);
+  assign o_ecall = o_sysins & !(|i_instr[31:7]);
+  assign o_mret = o_sysins & !(|i_instr[31:30]) & (&i_instr[29:28]) & !(|i_instr[27:22]) & i_instr[21] & !(|i_instr[20:7]);
 
   assign o_pre_ready = i_post_ready;
   assign o_post_valid = i_pre_valid;

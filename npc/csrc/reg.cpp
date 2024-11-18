@@ -45,31 +45,25 @@ void print_regs(regfile *ref, regfile *dut){
   printf("---------------DUT REGS---------------\n");
   printf("$pc = 0x%x\n",dut->pc);
   for (int i = 0; i < 32; i++) {
-    printf("%3s = 0x%08x\t",regs[i],dut->x[i]);
+    printf("%-3s = 0x%08x\t",regs[i],dut->x[i]);
     if(i % 4==3) {
       printf("\n");
     }
   }
   for(int i = 0; i < 4; i++){
-    printf("%8s = 0x%08x\t",csrs[i],dut->csr[i]);
-     if(i % 4==3) {
-      printf("\n");
-    }
+    printf("%-8s = 0x%08x\n",csrs[i],dut->csr[i]);
   }
 
   printf("---------------REF REGS---------------\n");
   printf("$pc = 0x%x\n",ref->pc);
   for (int i = 0; i < 32; i++) {
-    printf("%3s = 0x%08x\t",regs[i],ref->x[i]);
+    printf("%-3s = 0x%08x\t",regs[i],ref->x[i]);
     if(i % 4==3) {
       printf("\n");
     }
   }
   for(int i = 0; i < 4; i++){
-    printf("%8s = 0x%08x\t",csrs[i],ref->csr[i]);
-     if(i % 4==3) {
-      printf("\n");
-    }
+    printf("%-8s = 0x%08x\n",csrs[i],ref->csr[i]);
   }
 }
 

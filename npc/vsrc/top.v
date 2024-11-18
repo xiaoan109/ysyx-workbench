@@ -12,9 +12,9 @@ module top (
   );
 
   //2.cpu:  /////////////////////////////////////////////////
-  wire [`INS_WIDTH-1:0] ins;  // ifu -> idu.
+  wire [`INS_WIDTH-1:0] instr;  // ifu -> idu.
   wire [`CPU_WIDTH-1:0] pc;  // pcu -> ifu.
-  wire [`REG_ADDRW-1:0] rs1id, rs2id, rdid;  // idu -> reg.
+  wire [`REG_ADDRW-1:0] rs1id, rs2id;  // idu -> reg.
   wire [`EXU_OPT_WIDTH-1:0] exu_opt;  // idu -> exu.
   wire [`EXU_SEL_WIDTH-1:0] exu_src_sel;  // idu -> exu.
   wire [`LSU_OPT_WIDTH-1:0] lsu_opt;  // idu -> lsu.
@@ -28,6 +28,8 @@ module top (
   wire brch, jal, jalr;  // idu -> pcu.
 
   wire [`CPU_WIDTH-1:0] rd;  // wbu -> reg.
+  wire [`REG_ADDRW-1:0] idu_rdid;  // idu -> wbu.
+  wire [`REG_ADDRW-1:0] wbu_rdid;  //wbu ->reg.
   wire idu_rdwen;  // idu -> wbu.
   wire wbu_rdwen;  //wbu ->reg.
 
@@ -37,14 +39,17 @@ module top (
   wire csrsren;
   wire [`CSR_OPT_WIDTH-1:0] excsropt;
   wire excsrsrc;
-  wire [`CSR_ADDRW-1:0] csrdid;
-  wire csrdwen;
+  wire [`CSR_ADDRW-1:0] idu_csrdid;
+  wire [`CSR_ADDRW-1:0] wbu_csrdid;
+  wire idu_csrdwen;
+  wire wbu_csrdwen;
   wire sysins;
   wire mret;
   wire ecall;
 
   wire [`CPU_WIDTH-1:0] csrs;
-  wire [`CPU_WIDTH-1:0] csrd;
+  wire [`CPU_WIDTH-1:0] exu_csrd;
+  wire [`CPU_WIDTH-1:0] wbu_csrd;
 
   wire mepc_wen;
   wire [`CPU_WIDTH-1:0] mepc_wdata;
@@ -70,7 +75,7 @@ module top (
   regfile u_regfile (
     .i_clk   (i_clk),
     .i_wen   (wbu_rdwen),
-    .i_waddr (rdid),
+    .i_waddr (wbu_rdid),
     .i_wdata (rd),
     .i_raddr1(rs1id),
     .i_raddr2(rs2id),
@@ -79,24 +84,15 @@ module top (
     .s_a0zero(a0zero)
   );
 
-
-  // TODO: logic will be moved to a new unit
-  assign mepc_wen = ecall;
-  assign mepc_wdata = pc;
-  assign mcause_wen = ecall;
-  assign mcause_wdata = ecall ? `IRQ_ECALL : `CPU_WIDTH'b0;
-  assign mstatus_wen = ecall | mret;
-  assign mstatus_wdata = mstatus;
-
   csrfile u_csrfile (
     .i_clk          (i_clk),
     .i_rst_n        (rst_n_sync),
     .i_ren          (csrsren),
     .i_raddr        (csrsid),
     .o_rdata        (csrs),
-    .i_wen          (csrdwen),
-    .i_waddr        (csrdid),
-    .i_wdata        (csrd),
+    .i_wen          (wbu_csrdwen),
+    .i_waddr        (wbu_csrdid),
+    .i_wdata        (wbu_csrd),
     .i_mepc_wen     (mepc_wen),       // ecall
     .i_mepc_wdata   (mepc_wdata),     // ecall
     .i_mcause_wen   (mcause_wen),     // ecall
@@ -112,15 +108,15 @@ module top (
     .i_clk       (i_clk),
     .i_rst_n     (rst_n_sync),
     .i_pc        (pc),
-    .o_ins       (ins),
+    .o_instr     (instr),
     .o_post_valid(ifu_valid),
     .i_post_ready(idu_ready)
   );
 
   idu u_idu (
-    .i_ins        (ins),
+    .i_instr      (instr),
     .i_rst_n      (rst_n_sync),
-    .o_rdid       (rdid),
+    .o_rdid       (idu_rdid),
     .o_rs1id      (rs1id),
     .o_rs2id      (rs2id),
     .o_rdwen      (idu_rdwen),
@@ -136,8 +132,8 @@ module top (
     .o_csrsren    (csrsren),
     .o_excsropt   (excsropt),
     .o_excsrsrc   (excsrsrc),
-    .o_csrdid     (csrdid),
-    .o_csrdwen    (csrdwen),
+    .o_csrdid     (idu_csrdid),
+    .o_csrdwen    (idu_csrdwen),
     .o_ecall      (ecall),
     .o_mret       (mret),
     .i_pre_valid  (ifu_valid),
@@ -159,7 +155,7 @@ module top (
     .i_csrs      (csrs),
     .i_csr_opt   (excsropt),
     .i_csr_src   (excsrsrc),
-    .o_csrd      (csrd),
+    .o_csrd      (exu_csrd),
     .i_pre_valid (idu_valid),
     .o_pre_ready (exu_ready),
     .o_post_valid(exu_valid),
@@ -186,14 +182,23 @@ module top (
     .i_lsu_res  (lsu_res),
     .i_ld_en    (~lsu_opt[0]),
     .i_rdwen    (idu_rdwen),
+    .i_rdid     (idu_rdid),
+    .i_csrdwen  (idu_csrdwen),
+    .i_csrdid   (idu_csrdid),
+    .i_csrd     (exu_csrd),
+    .o_rdwen    (wbu_rdwen),
+    .o_rdid     (wbu_rdid),
     .o_rd       (rd),
-    .i_pre_valid(lsu_valid),
+    .o_csrdwen  (wbu_csrdwen),
+    .o_csrdid   (wbu_csrdid),
+    .o_csrd     (wbu_csrd),
+    .i_idu_valid(idu_valid),
+    .i_lsu_valid(lsu_valid),
     .i_exu_valid(exu_valid),
-    .o_pre_ready(wbu_ready),
-    .o_rdwen    (wbu_rdwen)
+    .o_wbu_ready(wbu_ready)
   );
 
-  pcu u_pcu (
+  bru u_bru (
     .i_clk      (i_clk),
     .i_rst_n    (rst_n_sync),
     .i_brch     (brch),
@@ -207,17 +212,36 @@ module top (
     .i_mtvec    (mtvec),
     .i_mepc     (mepc),
     .o_pc       (pc),
-    .i_pre_valid(lsu_valid)
+    .i_lsu_valid(lsu_valid),
+    .i_idu_valid(idu_valid)
+  );
+
+  iru u_iru (
+    .i_clk          (i_clk),
+    .i_rst_n        (i_rst_n),
+    .i_pc           (pc),
+    .i_ecall        (ecall),
+    .i_mret         (mret),
+    .i_mstatus      (mstatus),
+    .o_mepc_wen     (mepc_wen),
+    .o_mepc_wdata   (mepc_wdata),
+    .o_mcause_wen   (mcause_wen),
+    .o_mcause_wdata (mcause_wdata),
+    .o_mstatus_wen  (mstatus_wen),
+    .o_mstatus_wdata(mstatus_wdata),
+    //handshake
+    .i_idu_valid    (idu_valid),
+    .i_lsu_valid    (lsu_valid)
   );
 
   //3.sim:  ////////////////////////////////////////////////////////
-  wire [`INS_WIDTH-1:0] ins_r;
+  wire [`INS_WIDTH-1:0] instr_r;
 
   import "DPI-C" function void check_rst(input bit rst_flag);
   import "DPI-C" function bit check_finish(input int finish_flag);
   always @(*) begin
     check_rst(rst_n_sync);
-    if (check_finish(ins_r)) begin  //ins == ebreak.
+    if (check_finish(instr_r)) begin  //instr == ebreak.
       $display("@%t, \n----------EBREAK: HIT !!%s!! TRAP!!---------------\n", $time,
                a0zero ? "GOOD" : "BAD");
       $finish;
@@ -232,8 +256,8 @@ module top (
     .i_clk  (i_clk),
     .i_rst_n(rst_n_sync),
     .i_wen  (1'b1),
-    .i_din  (ins),
-    .o_dout (ins_r)
+    .i_din  (instr),
+    .o_dout (instr_r)
   );
 
 endmodule

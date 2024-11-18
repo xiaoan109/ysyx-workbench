@@ -31,8 +31,8 @@ module lsu_sram (
 
   /* verilator lint_off SYNCASYNCNET */
   always @(i_raddr, i_ren, i_rst_n, i_waddr, i_wdata, i_wmask, i_wen) begin // TODO: Why does always @(*) call write func repeatedly ?
-    rtl_pmem_read(i_raddr, rdata_pre, i_ren && i_rst_n);
-    rtl_pmem_write(i_waddr, i_wdata, i_wmask, i_wen && i_rst_n);
+    rtl_pmem_read(i_raddr, rdata_pre, i_ren);
+    rtl_pmem_write(i_waddr, i_wdata, i_wmask, i_wen);
   end
 
   stdreg #(

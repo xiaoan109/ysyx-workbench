@@ -14,8 +14,8 @@ extern "C" void check_rst(svBit rst_flag){
     rst_n_sync = false;
 }
 
-extern "C" svBit check_finish(int ins){
-  if(ins == 0x100073) //ebreak;
+extern "C" svBit check_finish(int instr){
+  if(instr == 0x100073) //ebreak;
     return 1;
   else 
     return 0;
@@ -23,7 +23,7 @@ extern "C" svBit check_finish(int ins){
 
 extern "C" void rtl_pmem_write(uint32_t waddr, uint32_t wdata, const svBitVecVal* wmask, svBit wen){
   IFDEF(MTRACE_ON, if(wen) printf("waddr = 0x%08x,wdata = 0x%08x,wmask = 0x%x\n", waddr,wdata,*wmask));
-  //waddr = waddr & ~0x3u;  //clear low 2bit for 4byte align.
+  // waddr = waddr & ~0x3u;  //clear low 2bit for 4byte align.
   if (waddr == 0xa0000000 + 0x0000000 && wen){ //UART
     IFDEF(DIFFTEST_ON, is_skip_ref = true);
     if(*wmask) {
@@ -44,7 +44,7 @@ extern "C" void rtl_pmem_write(uint32_t waddr, uint32_t wdata, const svBitVecVal
 }
 
 extern "C" void rtl_pmem_read(uint32_t raddr,uint32_t *rdata, svBit ren){
-  IFDEF(MTRACE_ON, raddr = raddr & ~0x3u);  //clear low 2bit for 4byte align.
+  // raddr = raddr & ~0x3u;  //clear low 2bit for 4byte align.
   if (raddr == 0xa0000000 + 0x0002000 && ren){ //TIMER
     IFDEF(DIFFTEST_ON, is_skip_ref = true);
     us = get_time();
@@ -56,7 +56,7 @@ extern "C" void rtl_pmem_read(uint32_t raddr,uint32_t *rdata, svBit ren){
   }
   else if (ren && raddr>=PMEM_START && raddr<=PMEM_END){
     *rdata = pmem_read(raddr,4);
-    // printf("raddr = 0x%08x,rdata = 0x%08x\n",raddr,*rdata);
+    IFDEF(MTRACE_ON, printf("raddr = 0x%08x,rdata = 0x%08x\n",raddr,*rdata));
   }
   else //avoid latch.
     *rdata = 0;

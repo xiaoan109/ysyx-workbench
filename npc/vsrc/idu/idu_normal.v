@@ -1,6 +1,6 @@
 `include "defines.vh"
 module idu_normal(
-  input        [`INS_WIDTH-1:0]     i_ins         ,
+  input        [`INS_WIDTH-1:0]     i_instr         ,
   input                             i_rst_n       , //for sim.
   output reg   [`REG_ADDRW-1:0]     o_rdid        , //for reg.
   output reg   [`REG_ADDRW-1:0]     o_rs1id       , //for reg.
@@ -16,12 +16,12 @@ module idu_normal(
 );
 
   // ebreak & ecall are not supperted now. ebreak will cause system finish.
-  wire [6:0] func7  = i_ins[31:25];
-  wire [4:0] rs2id  = i_ins[24:20];
-  wire [4:0] rs1id  = i_ins[19:15];
-  wire [2:0] func3  = i_ins[14:12];
-  wire [4:0] rdid   = i_ins[11: 7];
-  wire [6:0] opcode = i_ins[ 6: 0];
+  wire [6:0] func7  = i_instr[31:25];
+  wire [4:0] rs2id  = i_instr[24:20];
+  wire [4:0] rs1id  = i_instr[19:15];
+  wire [2:0] func3  = i_instr[14:12];
+  wire [4:0] rdid   = i_instr[11: 7];
+  wire [6:0] opcode = i_instr[ 6: 0];
 
   //1.reg info, imm info:  ///////////////////////////////////////////////////////////////////////////
   always@(*)begin
@@ -32,15 +32,15 @@ module idu_normal(
     o_rdwen = 1'b0;
     case(opcode) 
       `TYPE_R:        begin o_rs2id = rs2id;  o_rs1id = rs1id;  o_rdid = rdid;  o_rdwen = 1'b1; o_imm = `CPU_WIDTH'b0;                                              end
-      `TYPE_S:        begin o_rs2id = rs2id;  o_rs1id = rs1id;                                  o_imm = {{20{i_ins[31]}},i_ins[31:25],i_ins[11:7]};                 end
-      `TYPE_B:        begin o_rs2id = rs2id;  o_rs1id = rs1id;                                  o_imm = {{20{i_ins[31]}},i_ins[7],i_ins[30:25],i_ins[11:8],1'b0};   end
-      `TYPE_I:        begin                   o_rs1id = rs1id;  o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{20{i_ins[31]}},i_ins[31:20]};                             end
-      `TYPE_I_LOAD:   begin                   o_rs1id = rs1id;  o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{20{i_ins[31]}},i_ins[31:20]};                             end
-      `TYPE_I_JALR:   begin                   o_rs1id = rs1id;  o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{20{i_ins[31]}},i_ins[31:20]};                             end
-      `TYPE_I_EBRK:   begin                   o_rs1id = rs1id;  o_rdid = rdid;                  o_imm = {{20{i_ins[31]}},i_ins[31:20]};                             end
-      `TYPE_U_LUI:    begin                   o_rs1id = 0  ;    o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{0{i_ins[31]}},i_ins[31:12],12'b0};                        end //LUI: rdid = x0 + imm;
-      `TYPE_U_AUIPC:  begin                                     o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{0{i_ins[31]}},i_ins[31:12],12'b0};                        end
-      `TYPE_J:        begin                                     o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{12{i_ins[31]}},i_ins[19:12],i_ins[20],i_ins[30:21],1'b0}; end
+      `TYPE_S:        begin o_rs2id = rs2id;  o_rs1id = rs1id;                                  o_imm = {{20{i_instr[31]}},i_instr[31:25],i_instr[11:7]};                 end
+      `TYPE_B:        begin o_rs2id = rs2id;  o_rs1id = rs1id;                                  o_imm = {{20{i_instr[31]}},i_instr[7],i_instr[30:25],i_instr[11:8],1'b0};   end
+      `TYPE_I:        begin                   o_rs1id = rs1id;  o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{20{i_instr[31]}},i_instr[31:20]};                             end
+      `TYPE_I_LOAD:   begin                   o_rs1id = rs1id;  o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{20{i_instr[31]}},i_instr[31:20]};                             end
+      `TYPE_I_JALR:   begin                   o_rs1id = rs1id;  o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{20{i_instr[31]}},i_instr[31:20]};                             end
+      `TYPE_I_EBRK:   begin                   o_rs1id = rs1id;  o_rdid = rdid;                  o_imm = {{20{i_instr[31]}},i_instr[31:20]};                             end
+      `TYPE_U_LUI:    begin                   o_rs1id = 0  ;    o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{0{i_instr[31]}},i_instr[31:12],12'b0};                        end //LUI: rdid = x0 + imm;
+      `TYPE_U_AUIPC:  begin                                     o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{0{i_instr[31]}},i_instr[31:12],12'b0};                        end
+      `TYPE_J:        begin                                     o_rdid = rdid;  o_rdwen = 1'b1; o_imm = {{12{i_instr[31]}},i_instr[19:12],i_instr[20],i_instr[30:21],1'b0}; end
       default: ;
     endcase
   end
@@ -122,10 +122,10 @@ module idu_normal(
 
   // 5.sim:  /////////////////////////////////////////////////////////////////////////////////////////
   always@(*)begin
-    if(i_rst_n & |i_ins & id_err[0]) $display("\n----------ins decode error, ins = %x, opcode == %b---------------\n",i_ins,opcode);
-    if(i_rst_n & |i_ins & id_err[1]) $display("\n----------ins decode error, ins = %x, funct3 == %b---------------\n",i_ins,func3 );
-    if(i_rst_n & |i_ins & id_err[2]) $display("\n----------ins decode error, ins = %x, funct7 == %b---------------\n",i_ins,func7 );
-    if(i_rst_n & |i_ins & |id_err ) $finish; //ins docode err.
+    if(i_rst_n & |i_instr & id_err[0]) $display("\n----------instr decode error, instr = %x, opcode == %b---------------\n",i_instr,opcode);
+    if(i_rst_n & |i_instr & id_err[1]) $display("\n----------instr decode error, instr = %x, funct3 == %b---------------\n",i_instr,func3 );
+    if(i_rst_n & |i_instr & id_err[2]) $display("\n----------instr decode error, instr = %x, funct7 == %b---------------\n",i_instr,func7 );
+    if(i_rst_n & |i_instr & |id_err ) $finish; //instr docode err.
   end
 
 endmodule
