@@ -19,4 +19,4 @@ bash init.sh subproject-name
 # 架构图
 DVT自动生成
 
-![image](https://github.com/xiaoan109/ysyx-workbench/blob/master/npc/schematic_of_top.png)
+![image](/npc/schematic_of_top.png)
