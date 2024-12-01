@@ -122,10 +122,10 @@ module idu_normal(
 
   // 5.sim:  /////////////////////////////////////////////////////////////////////////////////////////
   always@(*)begin
-    if(i_rst_n & |i_instr & id_err[0]) $display("\n----------instr decode error, instr = %x, opcode == %b---------------\n",i_instr,opcode);
-    if(i_rst_n & |i_instr & id_err[1]) $display("\n----------instr decode error, instr = %x, funct3 == %b---------------\n",i_instr,func3 );
-    if(i_rst_n & |i_instr & id_err[2]) $display("\n----------instr decode error, instr = %x, funct7 == %b---------------\n",i_instr,func7 );
-    if(i_rst_n & |i_instr & |id_err ) $finish; //instr docode err.
+    if(i_rst_n && |i_instr && id_err[0]) $display("\n----------instr decode error, instr = %x, opcode == %b---------------\n",i_instr,opcode);
+    if(i_rst_n && |i_instr && id_err[1]) $display("\n----------instr decode error, instr = %x, funct3 == %b---------------\n",i_instr,func3 );
+    if(i_rst_n && |i_instr && id_err[2]) $display("\n----------instr decode error, instr = %x, funct7 == %b---------------\n",i_instr,func7 );
+    if(i_rst_n && |i_instr && |id_err ) $finish; //instr docode err.
   end
 
 endmodule

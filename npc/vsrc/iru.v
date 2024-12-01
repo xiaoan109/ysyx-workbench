@@ -54,7 +54,7 @@ module iru (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (i_idu_valid),
-    .i_din  ({i_ecall | i_mret, i_mstatus}),
+    .i_din  ({i_ecall || i_mret, i_mstatus}),
     .o_dout ({mstatus_wen, mstatus_wdata})
   );
 

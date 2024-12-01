@@ -42,7 +42,7 @@ module lsu (
   //B Channel
   wire [               1:0] bresp;
   wire                      bvalid;
-  wire                      bready;  // TODO: BREADY is not always high
+  wire                      bready;
   //AR Channel
   wire [    `CPU_WIDTH-1:0] araddr;
   wire                      arvalid_reg;
@@ -52,7 +52,7 @@ module lsu (
   wire [    `CPU_WIDTH-1:0] rdata;
   wire [               1:0] rresp;
   wire                      rvalid;
-  wire                      rready;  // TODO: BREADY is not always high
+  wire                      rready;
 
   assign ren = !i_opt[0] && (i_opt != `LSU_NOP) && i_pre_valid;
   assign wen = i_opt[0] && (i_opt != `LSU_NOP) && i_pre_valid;

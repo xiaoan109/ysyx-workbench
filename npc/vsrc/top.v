@@ -218,7 +218,7 @@ module top (
 
   iru u_iru (
     .i_clk          (i_clk),
-    .i_rst_n        (i_rst_n),
+    .i_rst_n        (rst_n_sync),
     .i_pc           (pc),
     .i_ecall        (ecall),
     .i_mret         (mret),
@@ -235,29 +235,15 @@ module top (
   );
 
   //3.sim:  ////////////////////////////////////////////////////////
-  wire [`INS_WIDTH-1:0] instr_r;
 
   import "DPI-C" function void check_rst(input bit rst_flag);
   import "DPI-C" function bit check_finish(input int finish_flag);
   always @(*) begin
     check_rst(rst_n_sync);
-    if (check_finish(instr_r)) begin  //instr == ebreak.
+    if (check_finish(instr)) begin  //instr == ebreak.
       $display("@%t, \n----------EBREAK: HIT !!%s!! TRAP!!---------------\n", $time,
                a0zero ? "GOOD" : "BAD");
       $finish;
     end
   end
-
-  //multi-cycle cpu: 3
-  stdreg #(
-    .WIDTH(`INS_WIDTH),
-    .RESET_VAL(`INS_WIDTH'b0)
-  ) u_std_reg (
-    .i_clk  (i_clk),
-    .i_rst_n(rst_n_sync),
-    .i_wen  (1'b1),
-    .i_din  (instr),
-    .o_dout (instr_r)
-  );
-
 endmodule

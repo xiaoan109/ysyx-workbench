@@ -3,6 +3,7 @@
 
 static uint64_t us;
 extern uint32_t dut_pc;
+extern bool dut_status;
 
 IFDEF(DIFFTEST_ON, extern bool is_skip_ref);
 
@@ -15,7 +16,7 @@ extern "C" void check_rst(svBit rst_flag){
 }
 
 extern "C" svBit check_finish(int instr){
-  if(instr == 0x100073) //ebreak;
+  if(instr == 0x100073 && dut_status == 1) //ebreak;
     return 1;
   else 
     return 0;

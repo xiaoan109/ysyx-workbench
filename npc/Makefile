@@ -1,3 +1,6 @@
+SRAM_DELAY = 1
+SRAM_LFSR_DELAY =
+
 VERILATOR=verilator
 # Generate C++ in executable form
 VERILATOR_FLAGS += -cc --exe
@@ -19,9 +22,14 @@ VERILATOR_FLAGS += --assert
 #VERILATOR_FLAGS += --gdbbt
 VERILATOR_FLAGS += --top-module top +incdir+vsrc/include
 VERILATOR_FLAGS += --build -Mdir $(BUILD_DIR)
+VERILATOR_FLAGS += +define+SRAM_DELAY=$(SRAM_DELAY)
+ifneq ($(SRAM_LFSR_DELAY), )
+VERILATOR_FLAGS += +define+LFSR
+endif
 
 DIFFTEST =
 TRACE = 
+
 
 BUILD_DIR = $(NPC_HOME)/build
 # SIM_TOPNAME = top

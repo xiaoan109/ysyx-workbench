@@ -33,15 +33,15 @@ module idu_system (
   wire rdneq0 = |o_rdid ;     // rd id not qual to zero.
   wire rsneq0 = |o_rs1id;     // rs id not qual to zero.
 
-  assign o_csrsren =  ((csrrw | csrrwi) & rdneq0) | (csrrs | csrrsi | csrrc | csrrci);
+  assign o_csrsren =  ((csrrw || csrrwi) && rdneq0) || (csrrs || csrrsi || csrrc || csrrci);
 
-  assign o_csrdwen =  (csrrw | csrrwi) | (rsneq0 & (csrrs | csrrsi | csrrc | csrrci));
+  assign o_csrdwen =  (csrrw || csrrwi) || (rsneq0 && (csrrs || csrrsi || csrrc || csrrci));
 
-  assign o_rdwen = o_csrsren & (o_rdid!=0);
+  assign o_rdwen = o_csrsren && (o_rdid!=0);
 
   assign o_excsropt = func3[1:0];   // please read the riscv-pri and riscv-spec manual, 00 for mret,ecall,ebreak... 01,10,11 for rw/rs/rc.
 
-  assign o_excsrsrc = (csrrwi|csrrsi|csrrci) ? `CSR_SEL_IMM : `CSR_SEL_REG;
+  assign o_excsrsrc = (csrrwi || csrrsi || csrrci) ? `CSR_SEL_IMM : `CSR_SEL_REG;
 
   assign o_imm = (o_excsrsrc == `CSR_SEL_IMM) ? {{(`CPU_WIDTH-5){ 1'b0 }} , uimm} : `CPU_WIDTH'b0;
 endmodule

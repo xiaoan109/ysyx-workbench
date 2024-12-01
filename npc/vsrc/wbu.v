@@ -21,7 +21,6 @@ module wbu (
   input                   i_lsu_valid,  //lsu
   input                   i_exu_valid,  //multi_cycle cpu needed
   output                  o_wbu_ready
-
 );
 
   wire [`CPU_WIDTH-1:0] exu_res;
@@ -79,5 +78,4 @@ module wbu (
   always @(*) begin
     diff_read_status(status);
   end
-
 endmodule

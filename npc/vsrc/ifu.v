@@ -28,7 +28,7 @@ module ifu (
   //B Channel
   wire [             1:0] bresp;
   wire                    bvalid;
-  wire                    bready;  // TODO: BREADY is not always high
+  wire                    bready;
   //AR Channel
   wire [  `CPU_WIDTH-1:0] araddr;
   wire                    arvalid_reg;
@@ -38,7 +38,7 @@ module ifu (
   wire [  `CPU_WIDTH-1:0] rdata;
   wire [             1:0] rresp;
   wire                    rvalid;
-  wire                    rready;  // TODO: BREADY is not always high
+  wire                    rready;
 
   assign ren = i_post_ready;
 
