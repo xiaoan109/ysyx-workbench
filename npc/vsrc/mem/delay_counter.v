@@ -12,13 +12,28 @@ module delay_counter #(
   wire [CNT_MAX_WIDTH-1:0] cnt_reg;
   reg cnt_run_next;
   wire cnt_run_reg;
+  wire [CNT_MAX_WIDTH-1:0] cnt_bound;
+  wire cnt_start;
 
+  assign cnt_start = i_ena && |i_bound;  //max count not equal to zero
+
+
+  stdreg #(
+    .WIDTH(CNT_MAX_WIDTH),
+    .RESET_VAL({(CNT_MAX_WIDTH) {1'b0}})
+  ) u_cnt_bound_reg (
+    .i_clk  (i_clk),
+    .i_rst_n(i_rst_n),
+    .i_wen  (cnt_start),
+    .i_din  (i_bound),
+    .o_dout (cnt_bound)
+  );
 
   always @(*) begin
     cnt_run_next = cnt_run_reg;
-    if (i_ena) begin
+    if (cnt_start) begin
       cnt_run_next = 1'b1;
-    end else if (cnt_reg == i_bound - 1) begin
+    end else if (cnt_reg == cnt_bound - 1) begin
       cnt_run_next = 1'b0;
     end
   end
@@ -37,7 +52,7 @@ module delay_counter #(
   always @(*) begin
     cnt_next = cnt_reg;
     if (cnt_run_reg) begin
-      if (cnt_reg == i_bound - 1) begin
+      if (cnt_reg == cnt_bound - 1) begin
         cnt_next = {(CNT_MAX_WIDTH) {1'b0}};
       end else begin
         cnt_next = cnt_next + 1'b1;
@@ -56,6 +71,7 @@ module delay_counter #(
     .o_dout (cnt_reg)
   );
 
-  assign o_done = cnt_run_reg && cnt_reg == i_bound - 1;
+
+  assign o_done = cnt_run_reg && cnt_reg == cnt_bound - 1;
 
 endmodule

@@ -42,7 +42,9 @@ module lsu (
   //B Channel
   wire [               1:0] bresp;
   wire                      bvalid;
-  wire                      bready;
+  wire                      bready_reg;
+  reg                       bready_next;
+
   //AR Channel
   wire [    `CPU_WIDTH-1:0] araddr;
   wire                      arvalid_reg;
@@ -52,7 +54,28 @@ module lsu (
   wire [    `CPU_WIDTH-1:0] rdata;
   wire [               1:0] rresp;
   wire                      rvalid;
-  wire                      rready;
+  wire                      rready_reg;
+  reg                       rready_next;
+
+  wire [               7:0] lfsr_delay;
+  wire                      cnt_done;
+  wire                      awvalid_wait_reg;
+  reg                       awvalid_wait_next;
+  wire                      wvalid_wait_reg;
+  reg                       wvalid_wait_next;
+  wire                      arvalid_wait_reg;
+  reg                       arvalid_wait_next;
+
+  wire                      bready_wait_reg;
+  reg                       bready_wait_next;
+  wire                      rready_wait_reg;
+  reg                       rready_wait_next;
+
+
+  wire                      rvalid_reg;  //edge detect
+  wire                      rvalid_pulse;
+  wire                      bvalid_reg;  //edge detect
+  wire                      bvalid_pulse;
 
   assign ren = !i_opt[0] && (i_opt != `LSU_NOP) && i_pre_valid;
   assign wen = i_opt[0] && (i_opt != `LSU_NOP) && i_pre_valid;
@@ -96,34 +119,72 @@ module lsu (
     if (wen) begin
       w_done_next = 1'b0;
     end
-    if (bvalid && bready) begin
+    if (bvalid && bready_reg) begin
       w_done_next = 1'b1;
     end
   end
 
   always @(*) begin
     awvalid_next = awvalid_reg && !awready;
-    wvalid_next  = wvalid_reg && !wready;
+    wvalid_next = wvalid_reg && !wready;
+    awvalid_wait_next = awvalid_wait_reg;
+    wvalid_wait_next = wvalid_wait_reg;
     if (w_done_reg && wen) begin
+      if (lfsr_delay == 8'b1) begin
+        awvalid_next = 1'b1;
+        wvalid_next  = 1'b1;
+      end else begin
+        awvalid_wait_next = 1'b1;
+        wvalid_wait_next  = 1'b1;
+      end
+    end
+    if (awvalid_wait_reg && wvalid_wait_reg && cnt_done) begin
       awvalid_next = 1'b1;
-      wvalid_next  = 1'b1;
+      wvalid_next = 1'b1;
+      awvalid_wait_next = 1'b0;
+      wvalid_wait_next = 1'b0;
     end
   end
 
   stdreg #(
-    .WIDTH    (3),
-    .RESET_VAL({1'b1, 2'b0})
+    .WIDTH    (5),
+    .RESET_VAL(5'b10000)
   ) u_write_reg (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (1'b1),
-    .i_din  ({w_done_next, awvalid_next, wvalid_next}),
-    .o_dout ({w_done_reg, awvalid_reg, wvalid_reg})
+    .i_din  ({w_done_next, awvalid_next, wvalid_next, awvalid_wait_next, wvalid_wait_next}),
+    .o_dout ({w_done_reg, awvalid_reg, wvalid_reg, awvalid_wait_reg, wvalid_wait_reg})
   );
 
 
-  assign bready = 1'b1;
+  // assign bready = 1'b1;
+  always @(*) begin
+    bready_next = 1'b0;
+    bready_wait_next = bready_wait_reg;
+    if (bvalid && !bready_reg) begin
+      if (lfsr_delay == 8'b1) begin
+        bready_next = 1'b1;
+      end else begin
+        bready_wait_next = 1'b1;
+      end
+    end
+    if (bready_wait_reg && cnt_done) begin
+      bready_next = 1'b1;
+      bready_wait_next = 1'b0;
+    end
+  end
 
+  stdreg #(
+    .WIDTH    (2),
+    .RESET_VAL(2'b0)
+  ) u_bready_reg (
+    .i_clk  (i_clk),
+    .i_rst_n(i_rst_n),
+    .i_wen  (1'b1),
+    .i_din  ({bready_next, bready_wait_next}),
+    .o_dout ({bready_reg, bready_wait_reg})
+  );
 
   // Read SRAM
   stdreg #(
@@ -142,27 +203,36 @@ module lsu (
     if (ren) begin
       r_done_next = 1'b0;
     end
-    if (rvalid && rready) begin
+    if (rvalid && rready_reg) begin
       r_done_next = 1'b1;
     end
   end
 
   always @(*) begin
     arvalid_next = arvalid_reg && !arready;
+    arvalid_wait_next = arvalid_wait_reg;
     if (r_done_reg && ren) begin
+      if (lfsr_delay == 8'b1) begin
+        arvalid_next = 1'b1;
+      end else begin
+        arvalid_wait_next = 1'b1;
+      end
+    end
+    if (arvalid_wait_reg && cnt_done) begin
       arvalid_next = 1'b1;
+      arvalid_wait_next = 1'b0;
     end
   end
 
   stdreg #(
-    .WIDTH    (2),
-    .RESET_VAL({1'b1, 1'b0})
+    .WIDTH    (3),
+    .RESET_VAL({3'b100})
   ) u_read_reg (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (1'b1),
-    .i_din  ({r_done_next, arvalid_next}),
-    .o_dout ({r_done_reg, arvalid_reg})
+    .i_din  ({r_done_next, arvalid_next, arvalid_wait_next}),
+    .o_dout ({r_done_reg, arvalid_reg, arvalid_wait_reg})
   );
 
   MuxKeyWithDefault #(
@@ -188,8 +258,33 @@ module lsu (
   );
 
 
-  assign rready = 1'b1;
+  // assign rready = 1'b1;
+  always @(*) begin
+    rready_next = 1'b0;
+    rready_wait_next = rready_wait_reg;
+    if (rvalid && !rready_reg) begin
+      if (lfsr_delay == 8'b1) begin
+        rready_next = 1'b1;
+      end else begin
+        rready_wait_next = 1'b1;
+      end
+    end
+    if (rready_wait_reg && cnt_done) begin
+      rready_next = 1'b1;
+      rready_wait_next = 1'b0;
+    end
+  end
 
+  stdreg #(
+    .WIDTH    (2),
+    .RESET_VAL(2'b0)
+  ) u_rready_reg (
+    .i_clk  (i_clk),
+    .i_rst_n(i_rst_n),
+    .i_wen  (1'b1),
+    .i_din  ({rready_next, rready_wait_next}),
+    .o_dout ({rready_reg, rready_wait_reg})
+  );
 
   axi_lite_sram u_axi_lite_sram (
     .i_clk  (i_clk),
@@ -206,7 +301,7 @@ module lsu (
     //B Channel
     .bresp  (bresp),
     .bvalid (bvalid),
-    .bready (bready),
+    .bready (bready_reg),
     //AR Channel
     .araddr (araddr),
     .arvalid(arvalid_reg),
@@ -215,8 +310,22 @@ module lsu (
     .rdata  (rdata),
     .rresp  (rresp),
     .rvalid (rvalid),
-    .rready (rready)
+    .rready (rready_reg)
   );
+
+  stdreg #(
+    .WIDTH    (2),
+    .RESET_VAL(2'b0)
+  ) u_B_R_valid_reg (
+    .i_clk  (i_clk),
+    .i_rst_n(i_rst_n),
+    .i_wen  (1'b1),
+    .i_din  ({bvalid, rvalid}),
+    .o_dout ({bvalid_reg, rvalid_reg})
+  );
+
+  assign rvalid_pulse = rvalid && !rvalid_reg;
+  assign bvalid_pulse = bvalid && !bvalid_reg;
 
   stdreg #(
     .WIDTH    (1),
@@ -229,9 +338,31 @@ module lsu (
     .o_dout (valid_r)
   );
 
+`ifdef LFSR
+  lfsr_8bit #(
+    .SEED (8'd2),
+    .WIDTH(8)
+  ) u_lfsr_8bit (
+    .clk_i        (i_clk),
+    .rst_ni       (i_rst_n),
+    .en_i         (wen || ren || rvalid_pulse || bvalid_pulse),  // 1'b1
+    .refill_way_oh(lfsr_delay)
+  );
+`else
+  assign lfsr_delay = `SRAM_DELAY;
+`endif
+
+  delay_counter u_delay_counter (
+    .i_clk(i_clk),
+    .i_rst_n(i_rst_n),
+    .i_ena(wen || ren || rvalid_pulse || bvalid_pulse),  // 1clk pulse
+    .i_bound(lfsr_delay - 1'b1),  //minus 1 is the real delay
+    .o_done(cnt_done)
+  );
+
 
   assign o_pre_ready = i_post_ready;
-  assign o_post_valid = (!w_done_reg && bvalid && bready) || (!r_done_reg && rvalid && rready) || (w_done_reg && r_done_reg && valid_r);
+  assign o_post_valid = (!w_done_reg && bvalid && bready_reg) || (!r_done_reg && rvalid && rready_reg) || (w_done_reg && r_done_reg && valid_r);
 
 
 endmodule
