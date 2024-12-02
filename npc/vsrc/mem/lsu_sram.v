@@ -1,6 +1,5 @@
 `include "defines.vh"
 module lsu_sram (
-  /* verilator lint_off UNUSEDSIGNAL */
   input                         i_clk,
   input                         i_rst_n,
   input                         i_pre_valid,

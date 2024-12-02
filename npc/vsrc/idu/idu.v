@@ -70,7 +70,8 @@ module idu (
     .o_lsu_opt    (nom_lsu_opt),  //for lsu.
     .o_brch       (nom_brch),     //for pcu.
     .o_jal        (nom_jal),      //for pcu.
-    .o_jalr       (nom_jalr)      //for pcu.
+    .o_jalr       (nom_jalr),     //for pcu.
+    .i_pre_valid  (i_pre_valid)   //for sim.
   );
 
 

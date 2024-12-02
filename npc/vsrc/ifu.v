@@ -5,51 +5,61 @@ module ifu (
   input  [`CPU_WIDTH-1:0] i_pc,
   output [`INS_WIDTH-1:0] o_instr,
   output                  o_post_valid,
-  input                   i_post_ready
+  input                   i_post_ready,
+  //AXI lite mem intf
+  /* verilator lint_off UNUSEDSIGNAL */
+  //AW Channel
+  output [`CPU_WIDTH-1:0] awaddr,
+  output                  awvalid,
+
+  input                     awready,
+  //W Channel
+  output [  `CPU_WIDTH-1:0] wdata,
+  output [`CPU_WIDTH/8-1:0] wstrb,
+  output                    wvalid,
+  input                     wready,
+  //B Channel
+  input  [             1:0] bresp,
+  input                     bvalid,
+  output                    bready,
+  //AR Channel
+  output [  `CPU_WIDTH-1:0] araddr,
+  output                    arvalid,
+  input                     arready,
+  //R Channel
+  input  [  `CPU_WIDTH-1:0] rdata,
+  input  [             1:0] rresp,
+  input                     rvalid,
+  output                    rready
+  /* verilator lint_on UNUSEDSIGNAL */
 );
 
 
-  wire                    ren;
+  wire ren;
 
-  wire                    r_done_reg;
-  reg                     r_done_next;
+  wire r_done_reg;
+  reg  r_done_next;
 
-  /* verilator lint_off UNUSEDSIGNAL */
   //AXI Lite Interface
-  //AW Channel
-  wire [  `CPU_WIDTH-1:0] awaddr;
-  wire                    awvalid;
-  wire                    awready;
-  //W Channel
-  wire [  `CPU_WIDTH-1:0] wdata;
-  wire [`CPU_WIDTH/8-1:0] wstrb;
-  wire                    wvalid;
-  wire                    wready;
-  //B Channel
-  wire [             1:0] bresp;
-  wire                    bvalid;
-  wire                    bready;
   //AR Channel
-  wire [  `CPU_WIDTH-1:0] araddr;
-  wire                    arvalid_reg;
-  reg                     arvalid_next;
-  wire                    arready;
+  wire arvalid_reg;
+  reg  arvalid_next;
   //R Channel
-  wire [  `CPU_WIDTH-1:0] rdata;
-  wire [             1:0] rresp;
-  wire                    rvalid;
-  wire                    rready_reg;
-  reg                     rready_next;
+  wire rready_reg;
+  reg  rready_next;
 
-  wire [             7:0] lfsr_delay;  // assert > 0
-  wire                    cnt_done;
-  wire                    arvalid_wait_reg;
-  reg                     arvalid_wait_next;
-  wire                    rready_wait_reg;
-  reg                     rready_wait_next;
+  assign arvalid = arvalid_reg;
+  assign rready  = rready_reg;
 
-  wire                    rvalid_reg;  //edge detect
-  wire                    rvalid_pulse;
+  wire [7:0] lfsr_delay;  // assert > 0
+  wire       cnt_done;
+  wire       arvalid_wait_reg;
+  reg        arvalid_wait_next;
+  wire       rready_wait_reg;
+  reg        rready_wait_next;
+
+  wire       rvalid_reg;  //edge detect
+  wire       rvalid_pulse;
 
   assign ren = i_post_ready;
 
@@ -134,35 +144,6 @@ module ifu (
     .i_wen  (1'b1),
     .i_din  ({rready_next, rready_wait_next}),
     .o_dout ({rready_reg, rready_wait_reg})
-  );
-
-
-
-  axi_lite_sram u_axi_lite_sram (
-    .i_clk  (i_clk),
-    .i_rst_n(i_rst_n),
-    //AW Channel
-    .awaddr (awaddr),
-    .awvalid(awvalid),
-    .awready(awready),
-    //W Channel
-    .wdata  (wdata),
-    .wstrb  (wstrb),
-    .wvalid (wvalid),
-    .wready (wready),
-    //B Channel
-    .bresp  (bresp),
-    .bvalid (bvalid),
-    .bready (bready),
-    //AR Channel
-    .araddr (araddr),
-    .arvalid(arvalid_reg),
-    .arready(arready),
-    //R Channel
-    .rdata  (rdata),
-    .rresp  (rresp),
-    .rvalid (rvalid),
-    .rready (rready_reg)
   );
 
 

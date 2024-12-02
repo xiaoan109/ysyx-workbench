@@ -10,10 +10,34 @@ module lsu (
   input                       i_pre_valid,
   output                      o_pre_ready,
   output                      o_post_valid,
-  input                       i_post_ready
+  input                       i_post_ready,
+  //AXI lite mem intf
+  /* verilator lint_off UNUSEDSIGNAL */
+  //AW Channel
+  output [    `CPU_WIDTH-1:0] awaddr,
+  output                      awvalid,
+  input                       awready,
+  //W Channel
+  output [    `CPU_WIDTH-1:0] wdata,
+  output [  `CPU_WIDTH/8-1:0] wstrb,
+  output                      wvalid,
+  input                       wready,
+  //B Channel
+  input  [               1:0] bresp,
+  input                       bvalid,
+  output                      bready,
+  //AR Channel
+  output [    `CPU_WIDTH-1:0] araddr,
+  output                      arvalid,
+  input                       arready,
+  //R Channel
+  input  [    `CPU_WIDTH-1:0] rdata,
+  input  [               1:0] rresp,
+  input                       rvalid,
+  output                      rready
+  /* verilator lint_on UNUSEDSIGNAL */
 );
 
-  /* verilator lint_off UNUSEDSIGNAL */
   wire                      ren;
   wire                      wen;
 
@@ -29,53 +53,47 @@ module lsu (
 
   //AXI Lite Interface
   //AW Channel
-  wire [    `CPU_WIDTH-1:0] awaddr;
   wire                      awvalid_reg;
   reg                       awvalid_next;
-  wire                      awready;
   //W Channel
-  wire [    `CPU_WIDTH-1:0] wdata;
-  wire [  `CPU_WIDTH/8-1:0] wstrb;
   wire                      wvalid_reg;
   reg                       wvalid_next;
-  wire                      wready;
   //B Channel
-  wire [               1:0] bresp;
-  wire                      bvalid;
   wire                      bready_reg;
   reg                       bready_next;
-
   //AR Channel
-  wire [    `CPU_WIDTH-1:0] araddr;
   wire                      arvalid_reg;
   reg                       arvalid_next;
-  wire                      arready;
   //R Channel
-  wire [    `CPU_WIDTH-1:0] rdata;
-  wire [               1:0] rresp;
-  wire                      rvalid;
   wire                      rready_reg;
   reg                       rready_next;
 
-  wire [               7:0] lfsr_delay;
-  wire                      cnt_done;
-  wire                      awvalid_wait_reg;
-  reg                       awvalid_wait_next;
-  wire                      wvalid_wait_reg;
-  reg                       wvalid_wait_next;
-  wire                      arvalid_wait_reg;
-  reg                       arvalid_wait_next;
 
-  wire                      bready_wait_reg;
-  reg                       bready_wait_next;
-  wire                      rready_wait_reg;
-  reg                       rready_wait_next;
+  assign awvalid = awvalid_reg;
+  assign wvalid  = wvalid_reg;
+  assign bready  = bready_reg;
+  assign arvalid = arvalid_reg;
+  assign rready  = rready_reg;
+
+  wire [7:0] lfsr_delay;
+  wire       cnt_done;
+  wire       awvalid_wait_reg;
+  reg        awvalid_wait_next;
+  wire       wvalid_wait_reg;
+  reg        wvalid_wait_next;
+  wire       arvalid_wait_reg;
+  reg        arvalid_wait_next;
+
+  wire       bready_wait_reg;
+  reg        bready_wait_next;
+  wire       rready_wait_reg;
+  reg        rready_wait_next;
 
 
-  wire                      rvalid_reg;  //edge detect
-  wire                      rvalid_pulse;
-  wire                      bvalid_reg;  //edge detect
-  wire                      bvalid_pulse;
+  wire       rvalid_reg;  //edge detect
+  wire       rvalid_pulse;
+  wire       bvalid_reg;  //edge detect
+  wire       bvalid_pulse;
 
   assign ren = !i_opt[0] && (i_opt != `LSU_NOP) && i_pre_valid;
   assign wen = i_opt[0] && (i_opt != `LSU_NOP) && i_pre_valid;
@@ -286,32 +304,6 @@ module lsu (
     .o_dout ({rready_reg, rready_wait_reg})
   );
 
-  axi_lite_sram u_axi_lite_sram (
-    .i_clk  (i_clk),
-    .i_rst_n(i_rst_n),
-    //AW Channel
-    .awaddr (awaddr),
-    .awvalid(awvalid_reg),
-    .awready(awready),
-    //W Channel
-    .wdata  (wdata),
-    .wstrb  (wstrb),
-    .wvalid (wvalid_reg),
-    .wready (wready),
-    //B Channel
-    .bresp  (bresp),
-    .bvalid (bvalid),
-    .bready (bready_reg),
-    //AR Channel
-    .araddr (araddr),
-    .arvalid(arvalid_reg),
-    .arready(arready),
-    //R Channel
-    .rdata  (rdata),
-    .rresp  (rresp),
-    .rvalid (rvalid),
-    .rready (rready_reg)
-  );
 
   stdreg #(
     .WIDTH    (2),

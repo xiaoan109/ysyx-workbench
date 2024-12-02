@@ -49,7 +49,6 @@ module axi_lite_sram (
   reg                   rvalid_wait_next;
   wire                  rvalid_wait_reg;
 
-  // TODO: Memory is not always ready
   assign awready = awready_reg;
   assign wready  = wready_reg;
   assign bvalid  = bvalid_reg;
