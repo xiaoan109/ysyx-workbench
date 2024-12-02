@@ -12,7 +12,7 @@ bash init.sh subproject-name
 # TODO
 **1. 目前为Multi-cycle CPU，还未加入流水线**
 
-**2. 目前进度为为Memory接入AXI-Lite总线，还未完全测试，v1.0测试了RT-Thread**
+**2. 目前进度为为Memory接入AXI-Lite总线，还未完全测试，v1.2加入了随机延迟，测试了RT-Thread**
 
 **3. 后续会逐渐把Verilator替换为SV+UVM或者Python+cocotb等更适合于业界的验证平台**
 
