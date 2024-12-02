@@ -74,8 +74,11 @@ module wbu (
 
   assign o_csrdwen = csrdwen && i_lsu_valid;
 
+`ifndef SYNTHESIS
   import "DPI-C" function void diff_read_status(input bit rtl_status);
   always @(*) begin
     diff_read_status(status);
   end
+`endif
+  
 endmodule

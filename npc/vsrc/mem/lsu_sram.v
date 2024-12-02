@@ -15,6 +15,7 @@ module lsu_sram (
 
   reg [`CPU_WIDTH-1:0] rdata_pre;
 
+`ifndef SYNTHESIS
   import "DPI-C" function void rtl_pmem_read(
     input  int raddr,
     output int rdata,
@@ -33,6 +34,7 @@ module lsu_sram (
     rtl_pmem_read(i_raddr, rdata_pre, i_ren);
     rtl_pmem_write(i_waddr, i_wdata, i_wmask, i_wen);
   end
+`endif
 
   stdreg #(
     .WIDTH    (`CPU_WIDTH),

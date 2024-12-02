@@ -24,8 +24,10 @@ module regfile (
   assign o_rdata2 = rf[i_raddr2];
 
   //for sim:  ////////////////////////////////////////////////////////////////////////////////////////////
+`ifndef SYNTHESIS
   assign s_a0zero = ~|rf[10];  // if x[10]/a0 is zero, o_a0zero == 1
   import "DPI-C" function void set_reg_ptr(input bit [31:0] a[]);
   initial set_reg_ptr(rf);
+`endif
 
 endmodule

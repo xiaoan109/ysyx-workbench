@@ -1,8 +1,11 @@
 `include "defines.vh"
 module top (
   input i_clk,
-  input i_rst_n
+  input i_rst_n,
+  output [`INS_WIDTH-1:0] virt_out  //virual output for synthesis
 );
+
+
   //1.rst : ////////////////////////////////////////////////////////
   wire rst_n_sync;
   stdrst u_stdrst (
@@ -418,7 +421,7 @@ module top (
 
 
   //3.sim:  ////////////////////////////////////////////////////////
-
+`ifndef SYNTHESIS
   import "DPI-C" function void check_rst(input bit rst_flag);
   import "DPI-C" function bit check_finish(input int finish_flag);
   always @(*) begin
@@ -429,4 +432,9 @@ module top (
       $finish;
     end
   end
+`endif
+
+
+  assign virt_out = instr;
+
 endmodule

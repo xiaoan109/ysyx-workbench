@@ -223,6 +223,7 @@ module idu_normal (
   assign o_jalr = (opcode == `TYPE_I_JALR) ? 1 : 0;
 
   // 5.sim:  /////////////////////////////////////////////////////////////////////////////////////////
+`ifndef SYNTHESIS
   always @(*) begin
     if (i_rst_n && i_pre_valid && |i_instr && id_err[0])
       $display(
@@ -238,5 +239,6 @@ module idu_normal (
       );
     if (i_rst_n && i_pre_valid && |i_instr && |id_err) $finish;  //instr docode err.
   end
+`endif
 
 endmodule

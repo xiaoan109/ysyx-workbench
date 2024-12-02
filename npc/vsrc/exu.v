@@ -1,23 +1,23 @@
 `include "defines.vh"
 module exu (
-  input      [    `CPU_WIDTH-1:0] i_pc,
-  input      [    `CPU_WIDTH-1:0] i_rs1,
-  input      [    `CPU_WIDTH-1:0] i_rs2,
-  input      [    `CPU_WIDTH-1:0] i_imm,
-  input      [`EXU_SEL_WIDTH-1:0] i_src_sel,
-  input      [`EXU_OPT_WIDTH-1:0] i_opt,
-  input                           i_sysins,
-  input      [    `CPU_WIDTH-1:0] i_csrs,
-  input      [`CSR_OPT_WIDTH-1:0] i_csr_opt,
-  input                           i_csr_src,
-  output reg [    `CPU_WIDTH-1:0] o_exu_res,
-  output                          o_zero,
-  output     [    `CPU_WIDTH-1:0] o_csrd,
+  input  [    `CPU_WIDTH-1:0] i_pc,
+  input  [    `CPU_WIDTH-1:0] i_rs1,
+  input  [    `CPU_WIDTH-1:0] i_rs2,
+  input  [    `CPU_WIDTH-1:0] i_imm,
+  input  [`EXU_SEL_WIDTH-1:0] i_src_sel,
+  input  [`EXU_OPT_WIDTH-1:0] i_opt,
+  input                       i_sysins,
+  input  [    `CPU_WIDTH-1:0] i_csrs,
+  input  [`CSR_OPT_WIDTH-1:0] i_csr_opt,
+  input                       i_csr_src,
+  output [    `CPU_WIDTH-1:0] o_exu_res,
+  output                      o_zero,
+  output [    `CPU_WIDTH-1:0] o_csrd,
   //handshake
-  input                           i_pre_valid,
-  output                          o_pre_ready,
-  output                          o_post_valid,
-  input                           i_post_ready
+  input                       i_pre_valid,
+  output                      o_pre_ready,
+  output                      o_post_valid,
+  input                       i_post_ready
 );
 
   wire [`CPU_WIDTH-1:0] sys_rs1, sys_csr, sys_csrres, sys_rdres;

@@ -10,6 +10,7 @@ module ifu_sram (
 
   reg [`CPU_WIDTH-1:0] rdata_pre;
 
+`ifndef SYNTHESIS
   import "DPI-C" function void rtl_pmem_read(
     input  int raddr,
     output int rdata,
@@ -18,6 +19,7 @@ module ifu_sram (
   always @(*) begin
     rtl_pmem_read(i_raddr, rdata_pre, i_ren);
   end
+`endif
 
   stdreg #(
     .WIDTH    (`CPU_WIDTH),

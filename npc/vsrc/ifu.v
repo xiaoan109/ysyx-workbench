@@ -63,10 +63,12 @@ module ifu (
 
   assign ren = i_post_ready;
 
+`ifndef SYNTHESIS
   import "DPI-C" function void diff_read_pc(input int rtl_pc);
   always @(*) begin
     diff_read_pc(i_pc);
   end
+`endif
 
 
   // Write SRAM

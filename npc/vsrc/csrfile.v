@@ -109,6 +109,7 @@ module csrfile (
   );
 
   //for sim:  ////////////////////////////////////////////////////////////////////////////////////////////
+`ifndef SYNTHESIS
   reg [`CPU_WIDTH-1:0] sim_csr[3:0];
   always @(*) begin
     sim_csr[0] = mstatus;
@@ -118,5 +119,6 @@ module csrfile (
   end
   import "DPI-C" function void set_csr_ptr(input bit [31:0] a[]);
   initial set_csr_ptr(sim_csr);
+`endif
 
 endmodule

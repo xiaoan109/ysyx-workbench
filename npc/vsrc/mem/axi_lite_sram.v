@@ -2,6 +2,7 @@
 module axi_lite_sram (
   input  wire                    i_clk,
   input  wire                    i_rst_n,
+  /* verilator lint_off UNUSEDSIGNAL */
   //AW Channel
   input  wire [  `CPU_WIDTH-1:0] awaddr,
   input  wire                    awvalid,
@@ -24,6 +25,7 @@ module axi_lite_sram (
   output wire [             1:0] rresp,
   output wire                    rvalid,
   input  wire                    rready
+  /* verilator lint_on UNUSEDSIGNAL */
 );
 
   reg                   mem_wen;
@@ -93,17 +95,6 @@ module axi_lite_sram (
     .o_dout ({awready_reg, wready_reg, bvalid_reg, bvalid_wait_reg})
   );
 
-  import "DPI-C" function void rtl_pmem_write(
-    input int       waddr,
-    input int       wdata,
-    input bit [3:0] wmask,
-    input bit       wen
-  );
-  always @(*) begin
-    rtl_pmem_write(awaddr, wdata, wstrb, mem_wen);
-  end
-
-
   //AR/R Channel
   always @(*) begin
     mem_ren = 1'b0;
@@ -149,14 +140,7 @@ module axi_lite_sram (
     .o_dout (rdata_reg)
   );
 
-  import "DPI-C" function void rtl_pmem_read(
-    input  int raddr,
-    output int rdata,
-    input  bit ren
-  );
-  always @(*) begin
-    rtl_pmem_read(araddr, rdata_next, mem_ren);
-  end
+
 
 `ifdef LFSR
   lfsr_8bit #(
@@ -179,4 +163,76 @@ module axi_lite_sram (
     .i_bound(lfsr_delay - 1'b1),   //minus 1 is the real delay
     .o_done (cnt_done)
   );
+
+
+
+`ifndef SYNTHESIS
+  import "DPI-C" function void rtl_pmem_write(
+    input int       waddr,
+    input int       wdata,
+    input bit [3:0] wmask,
+    input bit       wen
+  );
+  always @(*) begin
+    rtl_pmem_write(awaddr, wdata, wstrb, mem_wen);
+  end
+  import "DPI-C" function void rtl_pmem_read(
+    input  int raddr,
+    output int rdata,
+    input  bit ren
+  );
+  always @(*) begin
+    rtl_pmem_read(araddr, rdata_next, mem_ren);
+  end
+`else
+  /* verilator lint_off PINCONNECTEMPTY */
+  RegisterFile #(
+    .ADDR_WIDTH(8),
+    .DATA_WIDTH(32)
+  ) u_RegisterFile (
+    .clk(i_clk),
+    .wdata(wdata),
+    .waddr(awaddr[9:2] + 8'b1),
+    .wen(mem_wen),
+    .raddr1(araddr[9:2] + 8'b1),
+    .raddr2(8'b0),
+    .rdata1(rdata_next),
+    .rdata2()
+  );
+  // integer fd;
+  // reg file_is_open;
+  // reg [7:0] byte0;
+  // reg [7:0] byte1;
+  // reg [7:0] byte2;
+  // reg [7:0] byte3;
+  // integer file_size;
+  // integer i;
+  // initial begin
+  //   fd = $fopen(`MEM_INIT_FILE, "rb");
+  //   if (fd == 0) begin
+  //     $display("%m @%0t: Could not open file '%s'", $time, `MEM_INIT_FILE);
+  //     $stop;
+  //   end else begin
+  //     $display("%m @%0t: Opened %s for reading", $time, `MEM_INIT_FILE);
+  //     file_is_open = 1'b1;
+  //   end
+
+  //   $fseek(fd, 0, 2);  // move cur to end.
+  //   file_size = $ftell(fd);
+  //   $display("File size=%d", file_size);
+  //   $fseek(fd, 0, 0);  // move cur to begin.
+  //   if (file_is_open) begin
+  //     for (i = 0; i < (file_size >> 2); i = i + 1) begin
+  //       byte0 = $fgetc(fd);
+  //       byte1 = $fgetc(fd);
+  //       byte2 = $fgetc(fd);
+  //       byte3 = $fgetc(fd);
+  //       // $display("word=%h %h %h %h", byte3, byte2, byte1, byte0);
+  //       u_RegisterFile.rf[i+1] = {byte3, byte2, byte1, byte0};
+  //     end
+  //   end
+  // end
+  /* verilator lint_on PINCONNECTEMPTY */
+`endif
+
 endmodule
