@@ -14,3 +14,4 @@
 /nvboard
 /am-kernels
 !/yosys-sta/**
+!/ysyxSoC/**

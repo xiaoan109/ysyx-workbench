@@ -1,0 +1,96 @@
+name: Nightly CIRCT
+
+env:
+  # This is the name of the branch containing accumulated patches that need to
+  # be applied in order for the latest CIRCT to work with Chisel.
+  branch-name: ci/ci-circt-nightly
+
+on:
+  workflow_dispatch:
+  # Run every day at 1100 UTC which is:
+  #   - 0400 PDT / 0300 PST
+  #   - 0700 EDT / 0600 EST
+  # This time is *four* hours after the scheduled build of the firtool Nightly.
+  schedule:
+    - cron: '0 11 * * *'
+  # Run on PRs that target the
+  pull_request:
+    branches:
+      - ci/ci-circt-nightly
+
+jobs:
+  determine-branch:
+    name: 'Update Staging Branch and Determine Target Branch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update Staging Branch
+        uses: circt/update-staging-branch@v1.1.0
+        with:
+          user: chiselbot
+          email: chiselbot@users.noreply.github.com
+          main-branch: main
+          staging-branch: ${{ env.branch-name }}
+      - name: Determine Branch
+        id: determine-branch
+        shell: bash
+        run: |
+          branch=$(git rev-parse --abbrev-ref HEAD)
+          echo branches=\[\"$branch\"\] >> $GITHUB_OUTPUT
+    outputs:
+      branches: ${{ steps.determine-branch.outputs.branches }}
+
+  ci:
+    name: ci
+    needs: [determine-branch]
+    strategy:
+      matrix:
+        system: ["ubuntu-20.04"]
+        jvm: [8]
+        scala: ["2.13.12"]
+        espresso: ["2.4"]
+        circt: ["nightly"]
+        ref: ${{ fromJSON(needs.determine-branch.outputs.branches) }}
+    uses: ./.github/workflows/test.yml
+    with:
+      system: ${{ matrix.system }}
+      jvm: ${{ matrix.jvm }}
+      scala: ${{ matrix.scala }}
+      espresso: ${{ matrix.espresso }}
+      circt: ${{ matrix.circt }}
+      ref: ${{ matrix.ref }}
+
+  # Sentinel job to simplify how we specify which checks need to pass in branch
+  # protection and in Mergify. This job checks that all matrix jobs were
+  # successful.
+  check-tests:
+    name: "check tests"
+    needs: [ci]
+    runs-on: ubuntu-20.04
+    outputs:
+      success: ${{ steps.setoutput.outputs.success }}
+    steps:
+      - id: setoutput
+        run: echo "success=true" >> $GITHUB_OUTPUT
+
+  # Related to check-tests above, this job _always_ runs (even if tests fail
+  # and thus check-steps is skipped). This two sentinel job approach avoids an
+  # issue where failing tests causes a single sentinel job to be skipped which
+  # counts as passing for purposes of branch protection.
+  #
+  # See: https://brunoscheufler.com/blog/2022-04-09-the-required-github-status-check-that-wasnt
+  all_tests_passed:
+    name: "all tests passed"
+    runs-on: ubuntu-20.04
+    if: always() # Always run so that we never skip this check
+    needs: check-tests
+      # Pass only if check-tests set its output value
+    steps:
+      - run: |
+          PASSED=${{ needs.check-tests.outputs.success }}
+          if [[ $PASSED == "true" ]]; then
+            echo "### All tests passed! :rocket:" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          else
+            echo "### One or more tests FAILED! :bangbang:" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
