@@ -34,6 +34,7 @@ module lsu_sram (
     rtl_pmem_read(i_raddr, rdata_pre, i_ren);
     rtl_pmem_write(i_waddr, i_wdata, i_wmask, i_wen);
   end
+  /* verilator lint_on SYNCASYNCNET */
 `endif
 
   stdreg #(

@@ -85,4 +85,8 @@ extern "C" void diff_read_status(svBit rtl_status){
   dut_status = rtl_status;
 }
 
+extern "C" void difftest_skip(){
+ IFDEF(DIFFTEST_ON, is_skip_ref = true);
+}
+
 

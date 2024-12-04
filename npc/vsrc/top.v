@@ -144,6 +144,53 @@ module top (
   wire mem_rvalid;
   wire mem_rready;
 
+  //AW Channel
+  wire [`CPU_WIDTH-1:0] uart_awaddr;
+  wire uart_awvalid;
+  wire uart_awready;
+  //W Channel
+  wire [`CPU_WIDTH-1:0] uart_wdata;
+  wire [`CPU_WIDTH/8-1:0] uart_wstrb;
+  wire uart_wvalid;
+  wire uart_wready;
+  //B Channel
+  wire [1:0] uart_bresp;
+  wire uart_bvalid;
+  wire uart_bready;
+  //AR Channel
+  wire [`CPU_WIDTH-1:0] uart_araddr;
+  wire uart_arvalid;
+  wire uart_arready;
+  //R Channel
+  wire [`CPU_WIDTH-1:0] uart_rdata;
+  wire [1:0] uart_rresp;
+  wire uart_rvalid;
+  wire uart_rready;
+
+  //AW Channel
+  wire [`CPU_WIDTH-1:0] clint_awaddr;
+  wire clint_awvalid;
+  wire clint_awready;
+  //W Channel
+  wire [`CPU_WIDTH-1:0] clint_wdata;
+  wire [`CPU_WIDTH/8-1:0] clint_wstrb;
+  wire clint_wvalid;
+  wire clint_wready;
+  //B Channel
+  wire [1:0] clint_bresp;
+  wire clint_bvalid;
+  wire clint_bready;
+  //AR Channel
+  wire [`CPU_WIDTH-1:0] clint_araddr;
+  wire clint_arvalid;
+  wire clint_arready;
+  //R Channel
+  wire [`CPU_WIDTH-1:0] clint_rdata;
+  wire [1:0] clint_rresp;
+  wire clint_rvalid;
+  wire clint_rready;
+
+
 
   regfile u_regfile (
     .i_clk   (i_clk),
@@ -344,9 +391,16 @@ module top (
 
 
 
-  axi_lite_arbiter #(
-    .S_COUNT(2)
-  ) u_axi_lite_arbiter (
+  axi_lite_xbar #(
+    .S_COUNT(2),
+    .M_COUNT(3),
+    .M_BASE_ADDR({
+      32'h80000000, 32'ha0002000, 32'ha0000000
+    }),  //uart: 0xa000_0000 ~ 0xa000_0fff. clint: 0xa000_2000 ~ 0xa000_2fff. mem: 0x8000_0000 ~ 0x87ff_ffff.
+    .M_ADDR_WIDTH({32'd28, 32'd12, 32'd12}),
+    .M_CONNECT_READ({2'b11, 2'b11, 2'b11}),  //fully connected
+    .M_CONNECT_WRITE({2'b11, 2'b11, 2'b11})  //fully connected
+  ) u_axi_lite_xbar (
     .i_clk    (i_clk),
     .i_rst_n  (i_rst_n),
     //Slave
@@ -374,27 +428,27 @@ module top (
     .s_rready ({ifu_rready, lsu_rready}),
     //Master
     //AW Channel
-    .m_awaddr (mem_awaddr),
-    .m_awvalid(mem_awvalid),
-    .m_awready(mem_awready),
+    .m_awaddr ({mem_awaddr, clint_awaddr, uart_awaddr}),
+    .m_awvalid({mem_awvalid, clint_awvalid, uart_awvalid}),
+    .m_awready({mem_awready, clint_awready, uart_awready}),
     //W Channel
-    .m_wdata  (mem_wdata),
-    .m_wstrb  (mem_wstrb),
-    .m_wvalid (mem_wvalid),
-    .m_wready (mem_wready),
+    .m_wdata  ({mem_wdata, clint_wdata, uart_wdata}),
+    .m_wstrb  ({mem_wstrb, clint_wstrb, uart_wstrb}),
+    .m_wvalid ({mem_wvalid, clint_wvalid, uart_wvalid}),
+    .m_wready ({mem_wready, clint_wready, uart_wready}),
     //B Channel
-    .m_bresp  (mem_bresp),
-    .m_bvalid (mem_bvalid),
-    .m_bready (mem_bready),
+    .m_bresp  ({mem_bresp, clint_bresp, uart_bresp}),
+    .m_bvalid ({mem_bvalid, clint_bvalid, uart_bvalid}),
+    .m_bready ({mem_bready, clint_bready, uart_bready}),
     //AR Channel
-    .m_araddr (mem_araddr),
-    .m_arvalid(mem_arvalid),
-    .m_arready(mem_arready),
+    .m_araddr ({mem_araddr, clint_araddr, uart_araddr}),
+    .m_arvalid({mem_arvalid, clint_arvalid, uart_arvalid}),
+    .m_arready({mem_arready, clint_arready, uart_arready}),
     //R Channel
-    .m_rdata  (mem_rdata),
-    .m_rresp  (mem_rresp),
-    .m_rvalid (mem_rvalid),
-    .m_rready (mem_rready)
+    .m_rdata  ({mem_rdata, clint_rdata, uart_rdata}),
+    .m_rresp  ({mem_rresp, clint_rresp, uart_rresp}),
+    .m_rvalid ({mem_rvalid, clint_rvalid, uart_rvalid}),
+    .m_rready ({mem_rready, clint_rready, uart_rready})
   );
 
   axi_lite_sram u_axi_lite_sram (
@@ -417,6 +471,51 @@ module top (
     .rresp  (mem_rresp),
     .rvalid (mem_rvalid),
     .rready (mem_rready)
+  );
+
+  axi_lite_uart u_axi_lite_uart (
+    .i_clk  (i_clk),
+    .i_rst_n(i_rst_n),
+    .awaddr (uart_awaddr),
+    .awvalid(uart_awvalid),
+    .awready(uart_awready),
+    .wdata  (uart_wdata),
+    .wstrb  (uart_wstrb),
+    .wvalid (uart_wvalid),
+    .wready (uart_wready),
+    .bresp  (uart_bresp),
+    .bvalid (uart_bvalid),
+    .bready (uart_bready),
+    .araddr (uart_araddr),
+    .arvalid(uart_arvalid),
+    .arready(uart_arready),
+    .rdata  (uart_rdata),
+    .rresp  (uart_rresp),
+    .rvalid (uart_rvalid),
+    .rready (uart_rready)
+  );
+
+
+  axi_lite_clint u_axi_lite_clint (
+    .i_clk  (i_clk),
+    .i_rst_n(i_rst_n),
+    .awaddr (clint_awaddr),
+    .awvalid(clint_awvalid),
+    .awready(clint_awready),
+    .wdata  (clint_wdata),
+    .wstrb  (clint_wstrb),
+    .wvalid (clint_wvalid),
+    .wready (clint_wready),
+    .bresp  (clint_bresp),
+    .bvalid (clint_bvalid),
+    .bready (clint_bready),
+    .araddr (clint_araddr),
+    .arvalid(clint_arvalid),
+    .arready(clint_arready),
+    .rdata  (clint_rdata),
+    .rresp  (clint_rresp),
+    .rvalid (clint_rvalid),
+    .rready (clint_rready)
   );
 
 

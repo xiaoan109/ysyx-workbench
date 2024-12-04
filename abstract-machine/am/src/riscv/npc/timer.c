@@ -18,7 +18,7 @@ void __am_timer_init()
 
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime)
 {
-    uptime->us = get_time() - boot_time;
+    uptime->us = (get_time() - boot_time) / 6; //接近真实时间.系数是经验值而非准确值
 }
 
 void __am_timer_rtc(AM_TIMER_RTC_T *rtc)

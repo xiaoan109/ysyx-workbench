@@ -42,7 +42,7 @@ module axi_lite_sram (
   wire                  rvalid_reg;
   reg                   rvalid_next;
   wire [`CPU_WIDTH-1:0] rdata_reg;
-  reg  [`CPU_WIDTH-1:0] rdata_next;
+  wire [`CPU_WIDTH-1:0] rdata_next;
 
   wire [           7:0] lfsr_delay;  // assert > 0
   wire                  cnt_done;

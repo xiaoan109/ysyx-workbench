@@ -18,9 +18,9 @@ VERILATOR_FLAGS += --assert
 # Generate coverage analysis
 # VERILATOR_FLAGS += --coverage
 # Run Verilator in debug mode
-#VERILATOR_FLAGS += --debug
+# VERILATOR_FLAGS += --debug
 # Add this trace to get a backtrace in gdb
-#VERILATOR_FLAGS += --gdbbt
+# VERILATOR_FLAGS += --gdbbt
 VERILATOR_FLAGS += --top-module top +incdir+vsrc/include
 VERILATOR_FLAGS += --build -Mdir $(BUILD_DIR)
 VERILATOR_FLAGS += +define+SRAM_DELAY=$(SRAM_DELAY)
@@ -30,6 +30,9 @@ endif
 ifneq ($(SYNTHESIS), )
 VERILATOR_FLAGS += +define+SYNTHESIS +define+MEM_INIT_FILE=\"$(IMAGE)\"
 endif
+
+# This ensures verilog normal display but reduces performance
+VERILATOR_FLAGS += --autoflush
 
 DIFFTEST =
 TRACE = 
