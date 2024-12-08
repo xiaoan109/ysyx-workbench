@@ -44,7 +44,7 @@ void difftest_init(char *ref_so_file, long img_size) {
   assert(ref_difftest_init);
 
   ref_difftest_init();
-  ref_difftest_memcpy(PMEM_START,guest_to_host(PMEM_START), img_size, DIFFTEST_TO_REF);
+  ref_difftest_memcpy(INST_START,guest_to_host(INST_START), img_size, DIFFTEST_TO_REF);
 
   regfile dut = pack_dut_regfile(dut_reg, INST_START, dut_csr);
   // dut.csr[0] = 0x1800; //TODO: better way to init mstatus before hardware rst?

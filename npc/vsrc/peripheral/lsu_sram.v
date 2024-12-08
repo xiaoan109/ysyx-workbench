@@ -16,25 +16,22 @@ module lsu_sram (
   reg [`CPU_WIDTH-1:0] rdata_pre;
 
 `ifndef SYNTHESIS
-  import "DPI-C" function void rtl_pmem_read(
+  import "DPI-C" function void pmem_read(
     input  int raddr,
     output int rdata,
     input  bit ren
   );
 
-  import "DPI-C" function void rtl_pmem_write(
+  import "DPI-C" function void pmem_write(
     input int       waddr,
     input int       wdata,
     input bit [3:0] wmask,
     input bit       wen
   );
-
-  /* verilator lint_off SYNCASYNCNET */
   always @(i_raddr, i_ren, i_rst_n, i_waddr, i_wdata, i_wmask, i_wen) begin // TODO: Why does always @(*) call write func repeatedly ?
-    rtl_pmem_read(i_raddr, rdata_pre, i_ren);
-    rtl_pmem_write(i_waddr, i_wdata, i_wmask, i_wen);
+    pmem_read(i_raddr, rdata_pre, i_ren);
+    pmem_write(i_waddr, i_wdata, i_wmask, i_wen);
   end
-  /* verilator lint_on SYNCASYNCNET */
 `endif
 
   stdreg #(

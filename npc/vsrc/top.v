@@ -1,10 +1,37 @@
 `include "defines.vh"
 module top (
-  input i_clk,
-  input i_rst_n,
-  output [`INS_WIDTH-1:0] virt_out  //virual output for synthesis
+  input                   i_clk,
+  input                   i_rst_n,
+  input                   io_master_awready,
+  output                  io_master_awvalid,
+  output [`CPU_WIDTH-1:0] io_master_awaddr,
+  output [           3:0] io_master_awid,
+  output [           7:0] io_master_awlen,
+  output [           2:0] io_master_awsize,
+  output [           1:0] io_master_awburst,
+  input                   io_master_wready,
+  output                  io_master_wvalid,
+  output [`CPU_WIDTH-1:0] io_master_wdata,
+  output [           3:0] io_master_wstrb,
+  output                  io_master_wlast,
+  output                  io_master_bready,
+  input                   io_master_bvalid,
+  input  [           1:0] io_master_bresp,
+  input  [           3:0] io_master_bid,
+  input                   io_master_arready,
+  output                  io_master_arvalid,
+  output [`CPU_WIDTH-1:0] io_master_araddr,
+  output [           3:0] io_master_arid,
+  output [           7:0] io_master_arlen,
+  output [           2:0] io_master_arsize,
+  output [           1:0] io_master_arburst,
+  output                  io_master_rready,
+  input                   io_master_rvalid,
+  input  [           1:0] io_master_rresp,
+  input  [`CPU_WIDTH-1:0] io_master_rdata,
+  input                   io_master_rlast,
+  input  [           3:0] io_master_rid
 );
-
 
   //1.rst : ////////////////////////////////////////////////////////
   wire rst_n_sync;
@@ -74,121 +101,177 @@ module top (
   wire lsu_valid;
   wire wbu_ready;
 
-  //AXI lite mem intf
+  //AXI intf
   //AW Channel
-  wire [`CPU_WIDTH-1:0] ifu_awaddr;
-  wire ifu_awvalid;
-  wire ifu_awready;
+  wire ifu_axi_awready;
+  wire ifu_axi_awvalid;
+  wire [`CPU_WIDTH-1:0] ifu_axi_awaddr;
+  wire [3:0] ifu_axi_awid;
+  wire [7:0] ifu_axi_awlen;
+  wire [2:0] ifu_axi_awsize;
+  wire [1:0] ifu_axi_awburst;
+
   //W Channel
-  wire [`CPU_WIDTH-1:0] ifu_wdata;
-  wire [`CPU_WIDTH/8-1:0] ifu_wstrb;
-  wire ifu_wvalid;
-  wire ifu_wready;
+  wire ifu_axi_wready;
+  wire ifu_axi_wvalid;
+  wire [`CPU_WIDTH-1:0] ifu_axi_wdata;
+  wire [`CPU_WIDTH/8-1:0] ifu_axi_wstrb;
+  wire ifu_axi_wlast;
   //B Channel
-  wire [1:0] ifu_bresp;
-  wire ifu_bvalid;
-  wire ifu_bready;
+  wire ifu_axi_bready;
+  wire ifu_axi_bvalid;
+  wire [1:0] ifu_axi_bresp;
+  wire [3:0] ifu_axi_bid;
   //AR Channel
-  wire [`CPU_WIDTH-1:0] ifu_araddr;
-  wire ifu_arvalid;
-  wire ifu_arready;
+  wire ifu_axi_arready;
+  wire ifu_axi_arvalid;
+  wire [`CPU_WIDTH-1:0] ifu_axi_araddr;
+  wire [3:0] ifu_axi_arid;
+  wire [7:0] ifu_axi_arlen;
+  wire [2:0] ifu_axi_arsize;
+  wire [1:0] ifu_axi_arburst;
   //R Channel
-  wire [`CPU_WIDTH-1:0] ifu_rdata;
-  wire [1:0] ifu_rresp;
-  wire ifu_rvalid;
-  wire ifu_rready;
+  wire ifu_axi_rready;
+  wire ifu_axi_rvalid;
+  wire [1:0] ifu_axi_rresp;
+  wire [`CPU_WIDTH-1:0] ifu_axi_rdata;
+  wire ifu_axi_rlast;
+  wire [3:0] ifu_axi_rid;
 
   //AW Channel
-  wire [`CPU_WIDTH-1:0] lsu_awaddr;
-  wire lsu_awvalid;
-  wire lsu_awready;
+  wire lsu_axi_awready;
+  wire lsu_axi_awvalid;
+  wire [`CPU_WIDTH-1:0] lsu_axi_awaddr;
+  wire [3:0] lsu_axi_awid;
+  wire [7:0] lsu_axi_awlen;
+  wire [2:0] lsu_axi_awsize;
+  wire [1:0] lsu_axi_awburst;
+
   //W Channel
-  wire [`CPU_WIDTH-1:0] lsu_wdata;
-  wire [`CPU_WIDTH/8-1:0] lsu_wstrb;
-  wire lsu_wvalid;
-  wire lsu_wready;
+  wire lsu_axi_wready;
+  wire lsu_axi_wvalid;
+  wire [`CPU_WIDTH-1:0] lsu_axi_wdata;
+  wire [`CPU_WIDTH/8-1:0] lsu_axi_wstrb;
+  wire lsu_axi_wlast;
   //B Channel
-  wire [1:0] lsu_bresp;
-  wire lsu_bvalid;
-  wire lsu_bready;
+  wire lsu_axi_bready;
+  wire lsu_axi_bvalid;
+  wire [1:0] lsu_axi_bresp;
+  wire [3:0] lsu_axi_bid;
   //AR Channel
-  wire [`CPU_WIDTH-1:0] lsu_araddr;
-  wire lsu_arvalid;
-  wire lsu_arready;
+  wire lsu_axi_arready;
+  wire lsu_axi_arvalid;
+  wire [`CPU_WIDTH-1:0] lsu_axi_araddr;
+  wire [3:0] lsu_axi_arid;
+  wire [7:0] lsu_axi_arlen;
+  wire [2:0] lsu_axi_arsize;
+  wire [1:0] lsu_axi_arburst;
   //R Channel
-  wire [`CPU_WIDTH-1:0] lsu_rdata;
-  wire [1:0] lsu_rresp;
-  wire lsu_rvalid;
-  wire lsu_rready;
+  wire lsu_axi_rready;
+  wire lsu_axi_rvalid;
+  wire [1:0] lsu_axi_rresp;
+  wire [`CPU_WIDTH-1:0] lsu_axi_rdata;
+  wire lsu_axi_rlast;
+  wire [3:0] lsu_axi_rid;
 
   //AW Channel
-  wire [`CPU_WIDTH-1:0] mem_awaddr;
-  wire mem_awvalid;
-  wire mem_awready;
+  wire mem_axi_awready;
+  wire mem_axi_awvalid;
+  wire [`CPU_WIDTH-1:0] mem_axi_awaddr;
+  wire [3:0] mem_axi_awid;
+  wire [7:0] mem_axi_awlen;
+  wire [2:0] mem_axi_awsize;
+  wire [1:0] mem_axi_awburst;
   //W Channel
-  wire [`CPU_WIDTH-1:0] mem_wdata;
-  wire [`CPU_WIDTH/8-1:0] mem_wstrb;
-  wire mem_wvalid;
-  wire mem_wready;
+  wire mem_axi_wready;
+  wire mem_axi_wvalid;
+  wire [`CPU_WIDTH-1:0] mem_axi_wdata;
+  wire [`CPU_WIDTH/8-1:0] mem_axi_wstrb;
+  wire mem_axi_wlast;
   //B Channel
-  wire [1:0] mem_bresp;
-  wire mem_bvalid;
-  wire mem_bready;
+  wire mem_axi_bready;
+  wire mem_axi_bvalid;
+  wire [1:0] mem_axi_bresp;
+  wire [3:0] mem_axi_bid;
   //AR Channel
-  wire [`CPU_WIDTH-1:0] mem_araddr;
-  wire mem_arvalid;
-  wire mem_arready;
+  wire mem_axi_arready;
+  wire mem_axi_arvalid;
+  wire [`CPU_WIDTH-1:0] mem_axi_araddr;
+  wire [3:0] mem_axi_arid;
+  wire [7:0] mem_axi_arlen;
+  wire [2:0] mem_axi_arsize;
+  wire [1:0] mem_axi_arburst;
   //R Channel
-  wire [`CPU_WIDTH-1:0] mem_rdata;
-  wire [1:0] mem_rresp;
-  wire mem_rvalid;
-  wire mem_rready;
+  wire mem_axi_rready;
+  wire mem_axi_rvalid;
+  wire [1:0] mem_axi_rresp;
+  wire [`CPU_WIDTH-1:0] mem_axi_rdata;
+  wire mem_axi_rlast;
+  wire [3:0] mem_axi_rid;
+
 
   //AW Channel
-  wire [`CPU_WIDTH-1:0] uart_awaddr;
-  wire uart_awvalid;
-  wire uart_awready;
+  wire clint_axi_awready;
+  wire clint_axi_awvalid;
+  wire [`CPU_WIDTH-1:0] clint_axi_awaddr;
+  wire [3:0] clint_axi_awid;
+  wire [7:0] clint_axi_awlen;
+  wire [2:0] clint_axi_awsize;
+  wire [1:0] clint_axi_awburst;
   //W Channel
-  wire [`CPU_WIDTH-1:0] uart_wdata;
-  wire [`CPU_WIDTH/8-1:0] uart_wstrb;
-  wire uart_wvalid;
-  wire uart_wready;
+  wire clint_axi_wready;
+  wire clint_axi_wvalid;
+  wire [`CPU_WIDTH-1:0] clint_axi_wdata;
+  wire [`CPU_WIDTH/8-1:0] clint_axi_wstrb;
+  wire clint_axi_wlast;
   //B Channel
-  wire [1:0] uart_bresp;
-  wire uart_bvalid;
-  wire uart_bready;
+  wire clint_axi_bready;
+  wire clint_axi_bvalid;
+  wire [1:0] clint_axi_bresp;
+  wire [3:0] clint_axi_bid;
   //AR Channel
-  wire [`CPU_WIDTH-1:0] uart_araddr;
-  wire uart_arvalid;
-  wire uart_arready;
+  wire clint_axi_arready;
+  wire clint_axi_arvalid;
+  wire [`CPU_WIDTH-1:0] clint_axi_araddr;
+  wire [3:0] clint_axi_arid;
+  wire [7:0] clint_axi_arlen;
+  wire [2:0] clint_axi_arsize;
+  wire [1:0] clint_axi_arburst;
   //R Channel
-  wire [`CPU_WIDTH-1:0] uart_rdata;
-  wire [1:0] uart_rresp;
-  wire uart_rvalid;
-  wire uart_rready;
+  wire clint_axi_rready;
+  wire clint_axi_rvalid;
+  wire [1:0] clint_axi_rresp;
+  wire [`CPU_WIDTH-1:0] clint_axi_rdata;
+  wire clint_axi_rlast;
+  wire [3:0] clint_axi_rid;
 
   //AW Channel
-  wire [`CPU_WIDTH-1:0] clint_awaddr;
-  wire clint_awvalid;
-  wire clint_awready;
+  wire clint_axil_awready;
+  wire clint_axil_awvalid;
+  wire [`CPU_WIDTH-1:0] clint_axil_awaddr;
   //W Channel
-  wire [`CPU_WIDTH-1:0] clint_wdata;
-  wire [`CPU_WIDTH/8-1:0] clint_wstrb;
-  wire clint_wvalid;
-  wire clint_wready;
+  wire clint_axil_wready;
+  wire clint_axil_wvalid;
+  wire [`CPU_WIDTH-1:0] clint_axil_wdata;
+  wire [`CPU_WIDTH/8-1:0] clint_axil_wstrb;
   //B Channel
-  wire [1:0] clint_bresp;
-  wire clint_bvalid;
-  wire clint_bready;
+  wire clint_axil_bready;
+  wire clint_axil_bvalid;
+  wire [1:0] clint_axil_bresp;
   //AR Channel
-  wire [`CPU_WIDTH-1:0] clint_araddr;
-  wire clint_arvalid;
-  wire clint_arready;
+  wire clint_axil_arready;
+  wire clint_axil_arvalid;
+  wire [`CPU_WIDTH-1:0] clint_axil_araddr;
   //R Channel
-  wire [`CPU_WIDTH-1:0] clint_rdata;
-  wire [1:0] clint_rresp;
-  wire clint_rvalid;
-  wire clint_rready;
+  wire clint_axil_rready;
+  wire clint_axil_rvalid;
+  wire [1:0] clint_axil_rresp;
+  wire [`CPU_WIDTH-1:0] clint_axil_rdata;
+
+
+  // AXI BUS Access Fault Monitor
+  wire ifu_access_fault;
+  wire lsu_access_fault;
 
 
 
@@ -231,23 +314,35 @@ module top (
     .o_instr     (instr),
     .o_post_valid(ifu_valid),
     .i_post_ready(idu_ready),
-    .awaddr      (ifu_awaddr),
-    .awvalid     (ifu_awvalid),
-    .awready     (ifu_awready),
-    .wdata       (ifu_wdata),
-    .wstrb       (ifu_wstrb),
-    .wvalid      (ifu_wvalid),
-    .wready      (ifu_wready),
-    .bresp       (ifu_bresp),
-    .bvalid      (ifu_bvalid),
-    .bready      (ifu_bready),
-    .araddr      (ifu_araddr),
-    .arvalid     (ifu_arvalid),
-    .arready     (ifu_arready),
-    .rdata       (ifu_rdata),
-    .rresp       (ifu_rresp),
-    .rvalid      (ifu_rvalid),
-    .rready      (ifu_rready)
+    .awready     (ifu_axi_awready),
+    .awvalid     (ifu_axi_awvalid),
+    .awaddr      (ifu_axi_awaddr),
+    .awid        (ifu_axi_awid),
+    .awlen       (ifu_axi_awlen),
+    .awsize      (ifu_axi_awsize),
+    .awburst     (ifu_axi_awburst),
+    .wready      (ifu_axi_wready),
+    .wvalid      (ifu_axi_wvalid),
+    .wdata       (ifu_axi_wdata),
+    .wstrb       (ifu_axi_wstrb),
+    .wlast       (ifu_axi_wlast),
+    .bready      (ifu_axi_bready),
+    .bvalid      (ifu_axi_bvalid),
+    .bresp       (ifu_axi_bresp),
+    .bid         (ifu_axi_bid),
+    .arready     (ifu_axi_arready),
+    .arvalid     (ifu_axi_arvalid),
+    .araddr      (ifu_axi_araddr),
+    .arid        (ifu_axi_arid),
+    .arlen       (ifu_axi_arlen),
+    .arsize      (ifu_axi_arsize),
+    .arburst     (ifu_axi_arburst),
+    .rready      (ifu_axi_rready),
+    .rvalid      (ifu_axi_rvalid),
+    .rresp       (ifu_axi_rresp),
+    .rdata       (ifu_axi_rdata),
+    .rlast       (ifu_axi_rlast),
+    .rid         (ifu_axi_rid)
   );
 
 
@@ -311,23 +406,35 @@ module top (
     .o_pre_ready (lsu_ready),
     .o_post_valid(lsu_valid),
     .i_post_ready(wbu_ready),
-    .awaddr      (lsu_awaddr),
-    .awvalid     (lsu_awvalid),
-    .awready     (lsu_awready),
-    .wdata       (lsu_wdata),
-    .wstrb       (lsu_wstrb),
-    .wvalid      (lsu_wvalid),
-    .wready      (lsu_wready),
-    .bresp       (lsu_bresp),
-    .bvalid      (lsu_bvalid),
-    .bready      (lsu_bready),
-    .araddr      (lsu_araddr),
-    .arvalid     (lsu_arvalid),
-    .arready     (lsu_arready),
-    .rdata       (lsu_rdata),
-    .rresp       (lsu_rresp),
-    .rvalid      (lsu_rvalid),
-    .rready      (lsu_rready)
+    .awready     (lsu_axi_awready),
+    .awvalid     (lsu_axi_awvalid),
+    .awaddr      (lsu_axi_awaddr),
+    .awid        (lsu_axi_awid),
+    .awlen       (lsu_axi_awlen),
+    .awsize      (lsu_axi_awsize),
+    .awburst     (lsu_axi_awburst),
+    .wready      (lsu_axi_wready),
+    .wvalid      (lsu_axi_wvalid),
+    .wdata       (lsu_axi_wdata),
+    .wstrb       (lsu_axi_wstrb),
+    .wlast       (lsu_axi_wlast),
+    .bready      (lsu_axi_bready),
+    .bvalid      (lsu_axi_bvalid),
+    .bresp       (lsu_axi_bresp),
+    .bid         (lsu_axi_bid),
+    .arready     (lsu_axi_arready),
+    .arvalid     (lsu_axi_arvalid),
+    .araddr      (lsu_axi_araddr),
+    .arid        (lsu_axi_arid),
+    .arlen       (lsu_axi_arlen),
+    .arsize      (lsu_axi_arsize),
+    .arburst     (lsu_axi_arburst),
+    .rready      (lsu_axi_rready),
+    .rvalid      (lsu_axi_rvalid),
+    .rresp       (lsu_axi_rresp),
+    .rdata       (lsu_axi_rdata),
+    .rlast       (lsu_axi_rlast),
+    .rid         (lsu_axi_rid)
   );
 
   wbu u_wbu (
@@ -354,21 +461,23 @@ module top (
   );
 
   bru u_bru (
-    .i_clk      (i_clk),
-    .i_rst_n    (rst_n_sync),
-    .i_brch     (brch),
-    .i_jal      (jal),
-    .i_jalr     (jalr),
-    .i_zero     (zero),
-    .i_rs1      (rs1),
-    .i_imm      (imm),
-    .i_ecall    (ecall),
-    .i_mret     (mret),
-    .i_mtvec    (mtvec),
-    .i_mepc     (mepc),
-    .o_pc       (pc),
-    .i_lsu_valid(lsu_valid),
-    .i_idu_valid(idu_valid)
+    .i_clk             (i_clk),
+    .i_rst_n           (rst_n_sync),
+    .i_brch            (brch),
+    .i_jal             (jal),
+    .i_jalr            (jalr),
+    .i_zero            (zero),
+    .i_rs1             (rs1),
+    .i_imm             (imm),
+    .i_ecall           (ecall),
+    .i_mret            (mret),
+    .i_mtvec           (mtvec),
+    .i_mepc            (mepc),
+    .i_ifu_access_fault(ifu_access_fault),
+    .i_lsu_access_fault(lsu_access_fault),
+    .o_pc              (pc),
+    .i_lsu_valid       (lsu_valid),
+    .i_idu_valid       (idu_valid)
   );
 
   iru u_iru (
@@ -389,133 +498,364 @@ module top (
     .i_lsu_valid    (lsu_valid)
   );
 
+  // AXI BUS Access Fault Monitor
+  axi_access_fault u_ifu_axi_access_fault (
+    .i_clk       (i_clk),
+    .i_rst_n     (rst_n_sync),
+    .awready     (ifu_axi_awready),
+    .awvalid     (ifu_axi_awvalid),
+    .awaddr      (ifu_axi_awaddr),
+    .awid        (ifu_axi_awid),
+    .awlen       (ifu_axi_awlen),
+    .awsize      (ifu_axi_awsize),
+    .awburst     (ifu_axi_awburst),
+    .wready      (ifu_axi_wready),
+    .wvalid      (ifu_axi_wvalid),
+    .wdata       (ifu_axi_wdata),
+    .wstrb       (ifu_axi_wstrb),
+    .wlast       (ifu_axi_wlast),
+    .bready      (ifu_axi_bready),
+    .bvalid      (ifu_axi_bvalid),
+    .bresp       (ifu_axi_bresp),
+    .bid         (ifu_axi_bid),
+    .arready     (ifu_axi_arready),
+    .arvalid     (ifu_axi_arvalid),
+    .araddr      (ifu_axi_araddr),
+    .arid        (ifu_axi_arid),
+    .arlen       (ifu_axi_arlen),
+    .arsize      (ifu_axi_arsize),
+    .arburst     (ifu_axi_arburst),
+    .rready      (ifu_axi_rready),
+    .rvalid      (ifu_axi_rvalid),
+    .rresp       (ifu_axi_rresp),
+    .rdata       (ifu_axi_rdata),
+    .rlast       (ifu_axi_rlast),
+    .rid         (ifu_axi_rid),
+    //Access Fault Out
+    .access_fault(ifu_access_fault)
+  );
+
+  axi_access_fault u_lsu_axi_access_fault (
+    .i_clk       (i_clk),
+    .i_rst_n     (rst_n_sync),
+    .awready     (lsu_axi_awready),
+    .awvalid     (lsu_axi_awvalid),
+    .awaddr      (lsu_axi_awaddr),
+    .awid        (lsu_axi_awid),
+    .awlen       (lsu_axi_awlen),
+    .awsize      (lsu_axi_awsize),
+    .awburst     (lsu_axi_awburst),
+    .wready      (lsu_axi_wready),
+    .wvalid      (lsu_axi_wvalid),
+    .wdata       (lsu_axi_wdata),
+    .wstrb       (lsu_axi_wstrb),
+    .wlast       (lsu_axi_wlast),
+    .bready      (lsu_axi_bready),
+    .bvalid      (lsu_axi_bvalid),
+    .bresp       (lsu_axi_bresp),
+    .bid         (lsu_axi_bid),
+    .arready     (lsu_axi_arready),
+    .arvalid     (lsu_axi_arvalid),
+    .araddr      (lsu_axi_araddr),
+    .arid        (lsu_axi_arid),
+    .arlen       (lsu_axi_arlen),
+    .arsize      (lsu_axi_arsize),
+    .arburst     (lsu_axi_arburst),
+    .rready      (lsu_axi_rready),
+    .rvalid      (lsu_axi_rvalid),
+    .rresp       (lsu_axi_rresp),
+    .rdata       (lsu_axi_rdata),
+    .rlast       (lsu_axi_rlast),
+    .rid         (lsu_axi_rid),
+    //Access Fault Out
+    .access_fault(lsu_access_fault)
+  );
 
 
-  axi_lite_xbar #(
+  axi_interconnect #(
+    // Number of AXI inputs (slave interfaces)
     .S_COUNT(2),
-    .M_COUNT(3),
-    .M_BASE_ADDR({
-      32'h80000000, 32'ha0002000, 32'ha0000000
-    }),  //uart: 0xa000_0000 ~ 0xa000_0fff. clint: 0xa000_2000 ~ 0xa000_2fff. mem: 0x8000_0000 ~ 0x87ff_ffff.
-    .M_ADDR_WIDTH({32'd28, 32'd12, 32'd12}),
-    .M_CONNECT_READ({2'b11, 2'b11, 2'b11}),  //fully connected
-    .M_CONNECT_WRITE({2'b11, 2'b11, 2'b11})  //fully connected
-  ) u_axi_lite_xbar (
-    .i_clk    (i_clk),
-    .i_rst_n  (i_rst_n),
-    //Slave
-    //AW Channel
-    .s_awaddr ({ifu_awaddr, lsu_awaddr}),
-    .s_awvalid({ifu_awvalid, lsu_awvalid}),
-    .s_awready({ifu_awready, lsu_awready}),
-    //W Channel
-    .s_wdata  ({ifu_wdata, lsu_wdata}),
-    .s_wstrb  ({ifu_wstrb, lsu_wstrb}),
-    .s_wvalid ({ifu_wvalid, lsu_wvalid}),
-    .s_wready ({ifu_wready, lsu_wready}),
-    //B Channel
-    .s_bresp  ({ifu_bresp, lsu_bresp}),
-    .s_bvalid ({ifu_bvalid, lsu_bvalid}),
-    .s_bready ({ifu_bready, lsu_bready}),
-    //AR Channel
-    .s_araddr ({ifu_araddr, lsu_araddr}),
-    .s_arvalid({ifu_arvalid, lsu_arvalid}),
-    .s_arready({ifu_arready, lsu_arready}),
-    //R Channel
-    .s_rdata  ({ifu_rdata, lsu_rdata}),
-    .s_rresp  ({ifu_rresp, lsu_rresp}),
-    .s_rvalid ({ifu_rvalid, lsu_rvalid}),
-    .s_rready ({ifu_rready, lsu_rready}),
-    //Master
-    //AW Channel
-    .m_awaddr ({mem_awaddr, clint_awaddr, uart_awaddr}),
-    .m_awvalid({mem_awvalid, clint_awvalid, uart_awvalid}),
-    .m_awready({mem_awready, clint_awready, uart_awready}),
-    //W Channel
-    .m_wdata  ({mem_wdata, clint_wdata, uart_wdata}),
-    .m_wstrb  ({mem_wstrb, clint_wstrb, uart_wstrb}),
-    .m_wvalid ({mem_wvalid, clint_wvalid, uart_wvalid}),
-    .m_wready ({mem_wready, clint_wready, uart_wready}),
-    //B Channel
-    .m_bresp  ({mem_bresp, clint_bresp, uart_bresp}),
-    .m_bvalid ({mem_bvalid, clint_bvalid, uart_bvalid}),
-    .m_bready ({mem_bready, clint_bready, uart_bready}),
-    //AR Channel
-    .m_araddr ({mem_araddr, clint_araddr, uart_araddr}),
-    .m_arvalid({mem_arvalid, clint_arvalid, uart_arvalid}),
-    .m_arready({mem_arready, clint_arready, uart_arready}),
-    //R Channel
-    .m_rdata  ({mem_rdata, clint_rdata, uart_rdata}),
-    .m_rresp  ({mem_rresp, clint_rresp, uart_rresp}),
-    .m_rvalid ({mem_rvalid, clint_rvalid, uart_rvalid}),
-    .m_rready ({mem_rready, clint_rready, uart_rready})
+    // Number of AXI outputs (master interfaces)
+    .M_COUNT(2),
+    // Width of data bus in bits
+    .DATA_WIDTH(`CPU_WIDTH),
+    // Width of address bus in bits
+    .ADDR_WIDTH(`CPU_WIDTH),
+    // Width of ID signal
+    .ID_WIDTH(4),
+    // Propagate ID field
+    .FORWARD_ID(1),
+    // Number of regions per master interface
+    .M_REGIONS(3),  //MROM & SRAM & UART: m_axi_port1, CLINT: m_axi_port0
+    // Master interface base addresses
+    // M_COUNT concatenated fields of M_REGIONS concatenated fields of ADDR_WIDTH bits
+    // set to zero for default addressing based on M_ADDR_WIDTH
+    .M_BASE_ADDR({{32'h1000_0000, 32'h0f00_0000, 32'h2000_0000}, {32'h0, 32'h0, 32'h0200_0000}}),
+    // Master interface address widths
+    // M_COUNT concatenated fields of M_REGIONS concatenated fields of 32 bits
+    .M_ADDR_WIDTH({{32'd12, 32'd24, 32'd12}, {32'd0, 32'd0, 32'd16}})
+  ) u_axi_interconnect (
+    .clk(i_clk),
+    .rst(!rst_n_sync),
+
+    .s_axi_awid   ({ifu_axi_awid, lsu_axi_awid}),
+    .s_axi_awaddr ({ifu_axi_awaddr, lsu_axi_awaddr}),
+    .s_axi_awlen  ({ifu_axi_awlen, lsu_axi_awlen}),
+    .s_axi_awsize ({ifu_axi_awsize, lsu_axi_awsize}),
+    .s_axi_awburst({ifu_axi_awburst, lsu_axi_awburst}),
+    .s_axi_awlock ({1'b0, 1'b0}),
+    .s_axi_awcache({4'b0, 4'b0}),
+    .s_axi_awprot ({3'b0, 3'b0}),
+    .s_axi_awqos  ({4'b0, 4'b0}),
+    .s_axi_awuser ({1'b0, 1'b0}),
+    .s_axi_awvalid({ifu_axi_awvalid, lsu_axi_awvalid}),
+    .s_axi_awready({ifu_axi_awready, lsu_axi_awready}),
+    .s_axi_wdata  ({ifu_axi_wdata, lsu_axi_wdata}),
+    .s_axi_wstrb  ({ifu_axi_wstrb, lsu_axi_wstrb}),
+    .s_axi_wlast  ({ifu_axi_wlast, lsu_axi_wlast}),
+    .s_axi_wuser  ({1'b0, 1'b0}),
+    .s_axi_wvalid ({ifu_axi_wvalid, lsu_axi_wvalid}),
+    .s_axi_wready ({ifu_axi_wready, lsu_axi_wready}),
+    .s_axi_bid    ({ifu_axi_bid, lsu_axi_bid}),
+    .s_axi_bresp  ({ifu_axi_bresp, lsu_axi_bresp}),
+    .s_axi_buser  (),
+    .s_axi_bvalid ({ifu_axi_bvalid, lsu_axi_bvalid}),
+    .s_axi_bready ({ifu_axi_bready, lsu_axi_bready}),
+    .s_axi_arid   ({ifu_axi_arid, lsu_axi_arid}),
+    .s_axi_araddr ({ifu_axi_araddr, lsu_axi_araddr}),
+    .s_axi_arlen  ({ifu_axi_arlen, lsu_axi_arlen}),
+    .s_axi_arsize ({ifu_axi_arsize, lsu_axi_arsize}),
+    .s_axi_arburst({ifu_axi_arburst, lsu_axi_arburst}),
+    .s_axi_arlock ({1'b0, 1'b0}),
+    .s_axi_arcache({4'b0, 4'b0}),
+    .s_axi_arprot ({3'b0, 3'b0}),
+    .s_axi_arqos  ({4'b0, 4'b0}),
+    .s_axi_aruser ({1'b0, 1'b0}),
+    .s_axi_arvalid({ifu_axi_arvalid, lsu_axi_arvalid}),
+    .s_axi_arready({ifu_axi_arready, lsu_axi_arready}),
+    .s_axi_rid    ({ifu_axi_rid, lsu_axi_rid}),
+    .s_axi_rdata  ({ifu_axi_rdata, lsu_axi_rdata}),
+    .s_axi_rresp  ({ifu_axi_rresp, lsu_axi_rresp}),
+    .s_axi_rlast  ({ifu_axi_rlast, lsu_axi_rlast}),
+    .s_axi_ruser  (),
+    .s_axi_rvalid ({ifu_axi_rvalid, lsu_axi_rvalid}),
+    .s_axi_rready ({ifu_axi_rready, lsu_axi_rready}),
+
+    .m_axi_awid    ({mem_axi_awid, clint_axi_awid}),
+    .m_axi_awaddr  ({mem_axi_awaddr, clint_axi_awaddr}),
+    .m_axi_awlen   ({mem_axi_awlen, clint_axi_awlen}),
+    .m_axi_awsize  ({mem_axi_awsize, clint_axi_awsize}),
+    .m_axi_awburst ({mem_axi_awburst, clint_axi_awburst}),
+    .m_axi_awlock  (),
+    .m_axi_awcache (),
+    .m_axi_awprot  (),
+    .m_axi_awqos   (),
+    .m_axi_awregion(),
+    .m_axi_awuser  (),
+    .m_axi_awvalid ({mem_axi_awvalid, clint_axi_awvalid}),
+    .m_axi_awready ({mem_axi_awready, clint_axi_awready}),
+    .m_axi_wdata   ({mem_axi_wdata, clint_axi_wdata}),
+    .m_axi_wstrb   ({mem_axi_wstrb, clint_axi_wstrb}),
+    .m_axi_wlast   ({mem_axi_wlast, clint_axi_wlast}),
+    .m_axi_wuser   (),
+    .m_axi_wvalid  ({mem_axi_wvalid, clint_axi_wvalid}),
+    .m_axi_wready  ({mem_axi_wready, clint_axi_wready}),
+    .m_axi_bid     ({mem_axi_bid, clint_axi_bid}),
+    .m_axi_bresp   ({mem_axi_bresp, clint_axi_bresp}),
+    .m_axi_buser   (),
+    .m_axi_bvalid  ({mem_axi_bvalid, clint_axi_bvalid}),
+    .m_axi_bready  ({mem_axi_bready, clint_axi_bready}),
+    .m_axi_arid    ({mem_axi_arid, clint_axi_arid}),
+    .m_axi_araddr  ({mem_axi_araddr, clint_axi_araddr}),
+    .m_axi_arlen   ({mem_axi_arlen, clint_axi_arlen}),
+    .m_axi_arsize  ({mem_axi_arsize, clint_axi_arsize}),
+    .m_axi_arburst ({mem_axi_arburst, clint_axi_arburst}),
+    .m_axi_arlock  (),
+    .m_axi_arcache (),
+    .m_axi_arprot  (),
+    .m_axi_arqos   (),
+    .m_axi_arregion(),
+    .m_axi_aruser  (),
+    .m_axi_arvalid ({mem_axi_arvalid, clint_axi_arvalid}),
+    .m_axi_arready ({mem_axi_arready, clint_axi_arready}),
+    .m_axi_rid     ({mem_axi_rid, clint_axi_rid}),
+    .m_axi_rdata   ({mem_axi_rdata, clint_axi_rdata}),
+    .m_axi_rresp   ({mem_axi_rresp, clint_axi_rresp}),
+    .m_axi_rlast   ({mem_axi_rlast, clint_axi_rlast}),
+    .m_axi_ruser   (),
+    .m_axi_rvalid  ({mem_axi_rvalid, clint_axi_rvalid}),
+    .m_axi_rready  ({mem_axi_rready, clint_axi_rready})
   );
 
-  axi_lite_sram u_axi_lite_sram (
-    .i_clk  (i_clk),
-    .i_rst_n(i_rst_n),
-    .awaddr (mem_awaddr),
-    .awvalid(mem_awvalid),
-    .awready(mem_awready),
-    .wdata  (mem_wdata),
-    .wstrb  (mem_wstrb),
-    .wvalid (mem_wvalid),
-    .wready (mem_wready),
-    .bresp  (mem_bresp),
-    .bvalid (mem_bvalid),
-    .bready (mem_bready),
-    .araddr (mem_araddr),
-    .arvalid(mem_arvalid),
-    .arready(mem_arready),
-    .rdata  (mem_rdata),
-    .rresp  (mem_rresp),
-    .rvalid (mem_rvalid),
-    .rready (mem_rready)
+  axi_axil_adapter #(
+    // Width of address bus in bits
+    .ADDR_WIDTH     (`CPU_WIDTH),
+    // Width of input (slave) AXI interface data bus in bits
+    .AXI_DATA_WIDTH (`CPU_WIDTH),
+    // Width of AXI ID signal
+    .AXI_ID_WIDTH   (4),
+    // Width of output (master) AXI lite interface data bus in bits
+    .AXIL_DATA_WIDTH(`CPU_WIDTH)
+  ) u_axi_axil_adapter (
+    .clk           (i_clk),
+    .rst           (!rst_n_sync),
+    .s_axi_awid    (clint_axi_awid),
+    .s_axi_awaddr  (clint_axi_awaddr),
+    .s_axi_awlen   (clint_axi_awlen),
+    .s_axi_awsize  (clint_axi_awsize),
+    .s_axi_awburst (clint_axi_awburst),
+    .s_axi_awlock  (1'b0),
+    .s_axi_awcache (4'b0),
+    .s_axi_awprot  (3'b0),
+    .s_axi_awvalid (clint_axi_awvalid),
+    .s_axi_awready (clint_axi_awready),
+    .s_axi_wdata   (clint_axi_wdata),
+    .s_axi_wstrb   (clint_axi_wstrb),
+    .s_axi_wlast   (clint_axi_wlast),
+    .s_axi_wvalid  (clint_axi_wvalid),
+    .s_axi_wready  (clint_axi_wready),
+    .s_axi_bid     (clint_axi_bid),
+    .s_axi_bresp   (clint_axi_bresp),
+    .s_axi_bvalid  (clint_axi_bvalid),
+    .s_axi_bready  (clint_axi_bready),
+    .s_axi_arid    (clint_axi_arid),
+    .s_axi_araddr  (clint_axi_araddr),
+    .s_axi_arlen   (clint_axi_arlen),
+    .s_axi_arsize  (clint_axi_arsize),
+    .s_axi_arburst (clint_axi_arburst),
+    .s_axi_arlock  (1'b0),
+    .s_axi_arcache (4'b0),
+    .s_axi_arprot  (3'b0),
+    .s_axi_arvalid (clint_axi_arvalid),
+    .s_axi_arready (clint_axi_arready),
+    .s_axi_rid     (clint_axi_rid),
+    .s_axi_rdata   (clint_axi_rdata),
+    .s_axi_rresp   (clint_axi_rresp),
+    .s_axi_rlast   (clint_axi_rlast),
+    .s_axi_rvalid  (clint_axi_rvalid),
+    .s_axi_rready  (clint_axi_rready),
+    .m_axil_awaddr (clint_axil_awaddr),
+    .m_axil_awprot (),
+    .m_axil_awvalid(clint_axil_awvalid),
+    .m_axil_awready(clint_axil_awready),
+    .m_axil_wdata  (clint_axil_wdata),
+    .m_axil_wstrb  (clint_axil_wstrb),
+    .m_axil_wvalid (clint_axil_wvalid),
+    .m_axil_wready (clint_axil_wready),
+    .m_axil_bresp  (clint_axil_bresp),
+    .m_axil_bvalid (clint_axil_bvalid),
+    .m_axil_bready (clint_axil_bready),
+    .m_axil_araddr (clint_axil_araddr),
+    .m_axil_arprot (),
+    .m_axil_arvalid(clint_axil_arvalid),
+    .m_axil_arready(clint_axil_arready),
+    .m_axil_rdata  (clint_axil_rdata),
+    .m_axil_rresp  (clint_axil_rresp),
+    .m_axil_rvalid (clint_axil_rvalid),
+    .m_axil_rready (clint_axil_rready)
   );
 
-  axi_lite_uart u_axi_lite_uart (
-    .i_clk  (i_clk),
-    .i_rst_n(i_rst_n),
-    .awaddr (uart_awaddr),
-    .awvalid(uart_awvalid),
-    .awready(uart_awready),
-    .wdata  (uart_wdata),
-    .wstrb  (uart_wstrb),
-    .wvalid (uart_wvalid),
-    .wready (uart_wready),
-    .bresp  (uart_bresp),
-    .bvalid (uart_bvalid),
-    .bready (uart_bready),
-    .araddr (uart_araddr),
-    .arvalid(uart_arvalid),
-    .arready(uart_arready),
-    .rdata  (uart_rdata),
-    .rresp  (uart_rresp),
-    .rvalid (uart_rvalid),
-    .rready (uart_rready)
-  );
 
+
+  assign mem_axi_awready   = io_master_awready;
+  assign io_master_awvalid = mem_axi_awvalid;
+  assign io_master_awaddr  = mem_axi_awaddr;
+  assign io_master_awid    = mem_axi_awid;
+  assign io_master_awlen   = mem_axi_awlen;
+  assign io_master_awsize  = mem_axi_awsize;
+  assign io_master_awburst = mem_axi_awburst;
+  assign mem_axi_wready    = io_master_wready;
+  assign io_master_wvalid  = mem_axi_wvalid;
+  assign io_master_wdata   = mem_axi_wdata;
+  assign io_master_wstrb   = mem_axi_wstrb;
+  assign io_master_wlast   = mem_axi_wlast;
+  assign io_master_bready  = mem_axi_bready;
+  assign mem_axi_bvalid    = io_master_bvalid;
+  assign mem_axi_bresp     = io_master_bresp;
+  assign mem_axi_bid       = io_master_bid;
+  assign mem_axi_arready   = io_master_arready;
+  assign io_master_arvalid = mem_axi_arvalid;
+  assign io_master_araddr  = mem_axi_araddr;
+  assign io_master_arid    = mem_axi_arid;
+  assign io_master_arlen   = mem_axi_arlen;
+  assign io_master_arsize  = mem_axi_arsize;
+  assign io_master_arburst = mem_axi_arburst;
+  assign io_master_rready  = mem_axi_rready;
+  assign mem_axi_rvalid    = io_master_rvalid;
+  assign mem_axi_rresp     = io_master_rresp;
+  assign mem_axi_rdata     = io_master_rdata;
+  assign mem_axi_rlast     = io_master_rlast;
+  assign mem_axi_rid       = io_master_rid;
+
+  // axi_sram #(
+  //   // Width of data bus in bits
+  //   .DATA_WIDTH(`CPU_WIDTH),
+  //   // Width of address bus in bits
+  //   .ADDR_WIDTH(`CPU_WIDTH),
+  //   // Width of ID signal
+  //   .ID_WIDTH(4),
+  //   // Extra pipeline register on output
+  //   .PIPELINE_OUTPUT(0)
+  // ) u_axi_sram (
+  //   .clk          (i_clk),
+  //   .rst          (!rst_n_sync),
+  //   .s_axi_awid   (mem_awid),
+  //   .s_axi_awaddr (mem_awaddr),
+  //   .s_axi_awlen  (mem_awlen),
+  //   .s_axi_awsize (mem_awsize),
+  //   .s_axi_awburst(mem_awburst),
+  //   .s_axi_awlock (1'b0),
+  //   .s_axi_awcache(4'b0),
+  //   .s_axi_awprot (3'b0),
+  //   .s_axi_awvalid(mem_awvalid),
+  //   .s_axi_awready(mem_awready),
+  //   .s_axi_wdata  (mem_wdata),
+  //   .s_axi_wstrb  (mem_wstrb),
+  //   .s_axi_wlast  (mem_wlast),
+  //   .s_axi_wvalid (mem_wvalid),
+  //   .s_axi_wready (mem_wready),
+  //   .s_axi_bid    (mem_bid),
+  //   .s_axi_bresp  (mem_bresp),
+  //   .s_axi_bvalid (mem_bvalid),
+  //   .s_axi_bready (mem_bready),
+  //   .s_axi_arid   (mem_arid),
+  //   .s_axi_araddr (mem_araddr),
+  //   .s_axi_arlen  (mem_arlen),
+  //   .s_axi_arsize (mem_arsize),
+  //   .s_axi_arburst(mem_arburst),
+  //   .s_axi_arlock (1'b0),
+  //   .s_axi_arcache(4'b0),
+  //   .s_axi_arprot (3'b0),
+  //   .s_axi_arvalid(mem_arvalid),
+  //   .s_axi_arready(mem_arready),
+  //   .s_axi_rid    (mem_rid),
+  //   .s_axi_rdata  (mem_rdata),
+  //   .s_axi_rresp  (mem_rresp),
+  //   .s_axi_rlast  (mem_rlast),
+  //   .s_axi_rvalid (mem_rvalid),
+  //   .s_axi_rready (mem_rready)
+  // );
 
   axi_lite_clint u_axi_lite_clint (
     .i_clk  (i_clk),
-    .i_rst_n(i_rst_n),
-    .awaddr (clint_awaddr),
-    .awvalid(clint_awvalid),
-    .awready(clint_awready),
-    .wdata  (clint_wdata),
-    .wstrb  (clint_wstrb),
-    .wvalid (clint_wvalid),
-    .wready (clint_wready),
-    .bresp  (clint_bresp),
-    .bvalid (clint_bvalid),
-    .bready (clint_bready),
-    .araddr (clint_araddr),
-    .arvalid(clint_arvalid),
-    .arready(clint_arready),
-    .rdata  (clint_rdata),
-    .rresp  (clint_rresp),
-    .rvalid (clint_rvalid),
-    .rready (clint_rready)
+    .i_rst_n(rst_n_sync),
+    .awaddr (clint_axil_awaddr),
+    .awvalid(clint_axil_awvalid),
+    .awready(clint_axil_awready),
+    .wdata  (clint_axil_wdata),
+    .wstrb  (clint_axil_wstrb),
+    .wvalid (clint_axil_wvalid),
+    .wready (clint_axil_wready),
+    .bresp  (clint_axil_bresp),
+    .bvalid (clint_axil_bvalid),
+    .bready (clint_axil_bready),
+    .araddr (clint_axil_araddr),
+    .arvalid(clint_axil_arvalid),
+    .arready(clint_axil_arready),
+    .rdata  (clint_axil_rdata),
+    .rresp  (clint_axil_rresp),
+    .rvalid (clint_axil_rvalid),
+    .rready (clint_axil_rready)
   );
 
 
@@ -525,15 +865,11 @@ module top (
   import "DPI-C" function bit check_finish(input int finish_flag);
   always @(*) begin
     check_rst(rst_n_sync);
-    if (check_finish(instr)) begin  //instr == ebreak.
-      $display("@%t, \n----------EBREAK: HIT !!%s!! TRAP!!---------------\n", $time,
-               a0zero ? "GOOD" : "BAD");
+    if (check_finish(instr)) begin  //instr =   = ebreak.
+      $display("----------EBREAK: HIT [%s] TRAP!!---------------\n", a0zero ? "GOOD" : "BAD");
       $finish;
     end
   end
 `endif
-
-
-  assign virt_out = instr;
 
 endmodule

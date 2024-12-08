@@ -2,7 +2,6 @@
 module axi_lite_sram (
   input  wire                    i_clk,
   input  wire                    i_rst_n,
-  /* verilator lint_off UNUSEDSIGNAL */
   //AW Channel
   input  wire [  `CPU_WIDTH-1:0] awaddr,
   input  wire                    awvalid,
@@ -25,7 +24,6 @@ module axi_lite_sram (
   output wire [             1:0] rresp,
   output wire                    rvalid,
   input  wire                    rready
-  /* verilator lint_on UNUSEDSIGNAL */
 );
 
   reg                   mem_wen;
@@ -166,26 +164,27 @@ module axi_lite_sram (
 
 
 
-`ifndef SYNTHESIS
-  import "DPI-C" function void rtl_pmem_write(
-    input int       waddr,
-    input int       wdata,
-    input bit [3:0] wmask,
-    input bit       wen
-  );
-  always @(*) begin
-    rtl_pmem_write(awaddr, wdata, wstrb, mem_wen);
-  end
-  import "DPI-C" function void rtl_pmem_read(
-    input  int raddr,
-    output int rdata,
-    input  bit ren
-  );
-  always @(*) begin
-    rtl_pmem_read(araddr, rdata_next, mem_ren);
-  end
-`else
-  /* verilator lint_off PINCONNECTEMPTY */
+  `ifndef SYNTHESIS
+    import "DPI-C" function void pmem_write(
+      input int       waddr,
+      input int       wdata,
+      input bit [3:0] wmask,
+      input bit       wen
+    );
+    always @(*) begin
+      pmem_write(awaddr, wdata, wstrb, mem_wen);
+    end
+    import "DPI-C" function void pmem_read(
+      input  int raddr,
+      output int rdata,
+      input  bit ren
+    );
+    always @(*) begin
+      pmem_read(araddr, rdata_next, mem_ren);
+    end
+  `else
+  wire [`CPU_WIDTH-1:0] rdata_int;
+
   RegisterFile #(
     .ADDR_WIDTH(8),
     .DATA_WIDTH(32)
@@ -196,9 +195,19 @@ module axi_lite_sram (
     .wen(mem_wen),
     .raddr1(araddr[9:2] + 8'b1),
     .raddr2(8'b0),
-    .rdata1(rdata_next),
+    .rdata1(rdata_int),
     .rdata2()
   );
+  genvar i;
+  generate
+    for (i = 0; i < `CPU_WIDTH / 8; i = i + 1) begin : byte_revert
+      assign rdata_next[i*8+:8] = rdata_int[(`CPU_WIDTH/8-i-1)*8+:8];
+    end
+  endgenerate
+
+  initial begin
+    $readmemh(`MEM_INIT_FILE, u_RegisterFile.rf);
+  end
   // integer fd;
   // reg file_is_open;
   // reg [7:0] byte0;
@@ -232,7 +241,6 @@ module axi_lite_sram (
   //     end
   //   end
   // end
-  /* verilator lint_on PINCONNECTEMPTY */
-`endif
+  `endif
 
 endmodule

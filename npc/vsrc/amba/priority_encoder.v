@@ -27,9 +27,6 @@ THE SOFTWARE.
 /*
  * Priority encoder module
  */
-
-// verilator lint_off UNOPTFLAT 
-// verilator lint_off WIDTHTRUNC
 module priority_encoder #(
   parameter WIDTH = 4,
   // LSB priority selection
@@ -85,5 +82,3 @@ module priority_encoder #(
   assign output_unencoded = 1 << output_encoded;
 
 endmodule
-// verilator lint_on UNOPTFLAT
-// verilator lint_on WIDTHTRUNC

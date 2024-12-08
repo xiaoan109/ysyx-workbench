@@ -11,92 +11,93 @@ module lsu (
   output                      o_pre_ready,
   output                      o_post_valid,
   input                       i_post_ready,
-  //AXI lite mem intf
-  /* verilator lint_off UNUSEDSIGNAL */
+  //AXI mem intf
   //AW Channel
-  output [    `CPU_WIDTH-1:0] awaddr,
-  output                      awvalid,
   input                       awready,
+  output                      awvalid,
+  output [    `CPU_WIDTH-1:0] awaddr,
+  output [               3:0] awid,
+  output [               7:0] awlen,
+  output [               2:0] awsize,
+  output [               1:0] awburst,
   //W Channel
+  input                       wready,
+  output                      wvalid,
   output [    `CPU_WIDTH-1:0] wdata,
   output [  `CPU_WIDTH/8-1:0] wstrb,
-  output                      wvalid,
-  input                       wready,
+  output                      wlast,
   //B Channel
-  input  [               1:0] bresp,
-  input                       bvalid,
   output                      bready,
+  input                       bvalid,
+  input  [               1:0] bresp,
+  input  [               3:0] bid,
   //AR Channel
-  output [    `CPU_WIDTH-1:0] araddr,
-  output                      arvalid,
   input                       arready,
+  output                      arvalid,
+  output [    `CPU_WIDTH-1:0] araddr,
+  output [               3:0] arid,
+  output [               7:0] arlen,
+  output [               2:0] arsize,
+  output [               1:0] arburst,
   //R Channel
-  input  [    `CPU_WIDTH-1:0] rdata,
-  input  [               1:0] rresp,
+  output                      rready,
   input                       rvalid,
-  output                      rready
-  /* verilator lint_on UNUSEDSIGNAL */
+  input  [               1:0] rresp,
+  input  [    `CPU_WIDTH-1:0] rdata,
+  input                       rlast,
+  input  [               3:0] rid
 );
 
-  wire                      ren;
-  wire                      wen;
-
-  wire                      w_done_reg;
-  reg                       w_done_next;
-  wire                      r_done_reg;
-  reg                       r_done_next;
-
-  wire                      valid_r;  //None MEM OP
-
-  wire [`LSU_OPT_WIDTH-1:0] lsu_opt;
+  localparam [7:0] BURST_LEN = 8'b1;
+  // localparam [2:0] BURST_SIZE = 3'($clog2(`CPU_WIDTH / 8));
+  localparam [1:0] BURST_TYPE = 2'b01;
 
 
-  //AXI Lite Interface
+  wire                       ren;
+  wire                       wen;
+
+  wire                       w_done_reg;
+  reg                        w_done_next;
+  wire                       r_done_reg;
+  reg                        r_done_next;
+
+  wire                       valid_r;  //None MEM OP
+
+  wire [ `LSU_OPT_WIDTH-1:0] lsu_opt;
+
+  //AXI Interface
   //AW Channel
-  wire                      awvalid_reg;
-  reg                       awvalid_next;
+  wire                       awvalid_reg;
+  reg                        awvalid_next;
   //W Channel
-  wire                      wvalid_reg;
-  reg                       wvalid_next;
+  wire                       wvalid_reg;
+  reg                        wvalid_next;
+  wire [$clog2(BURST_LEN):0] write_index_reg;
+  reg  [$clog2(BURST_LEN):0] write_index_next;
+  wire                       wlast_reg;
+  reg                        wlast_next;
   //B Channel
-  wire                      bready_reg;
-  reg                       bready_next;
+  wire                       bready_reg;
+  reg                        bready_next;
   //AR Channel
-  wire                      arvalid_reg;
-  reg                       arvalid_next;
+  wire                       arvalid_reg;
+  reg                        arvalid_next;
   //R Channel
-  wire                      rready_reg;
-  reg                       rready_next;
+  wire                       rready_reg;
+  reg                        rready_next;
 
 
   assign awvalid = awvalid_reg;
-  assign wvalid  = wvalid_reg;
-  assign bready  = bready_reg;
+  assign wvalid = wvalid_reg;
+  assign wlast = !wlast_reg && wlast_next;
+  assign bready = bready_reg;
   assign arvalid = arvalid_reg;
-  assign rready  = rready_reg;
+  assign rready = rready_reg;
 
-  wire [7:0] lfsr_delay;
-  wire       cnt_done;
-  wire       awvalid_wait_reg;
-  reg        awvalid_wait_next;
-  wire       wvalid_wait_reg;
-  reg        wvalid_wait_next;
-  wire       arvalid_wait_reg;
-  reg        arvalid_wait_next;
-
-  wire       bready_wait_reg;
-  reg        bready_wait_next;
-  wire       rready_wait_reg;
-  reg        rready_wait_next;
-
-
-  wire       rvalid_reg;  //edge detect
-  wire       rvalid_pulse;
-  wire       bvalid_reg;  //edge detect
-  wire       bvalid_pulse;
 
   assign ren = !i_opt[0] && (i_opt != `LSU_NOP) && i_pre_valid;
   assign wen = i_opt[0] && (i_opt != `LSU_NOP) && i_pre_valid;
+
 
   stdreg #(
     .WIDTH    (`LSU_OPT_WIDTH),
@@ -109,18 +110,41 @@ module lsu (
     .o_dout (lsu_opt)
   );
 
+
+  wire [2:0] awsize_int;
+  MuxKeyWithDefault #(
+    .NR_KEY  (3),
+    .KEY_LEN (4),
+    .DATA_LEN(3)
+  ) u_awsize_mux (
+    .out(awsize_int),
+    .key(i_opt),
+    .default_out(3'b0),
+    .lut({`LSU_SB, 3'b00, `LSU_SH, 3'b01, `LSU_SW, 3'b10})
+  );
+
+
+  wire [`CPU_WIDTH-1:0] wdata_int;
+  assign wdata_int = i_regst << ((i_addr & 2'b11) << 3);
   // Write SRAM
   stdreg #(
-    .WIDTH(`CPU_WIDTH * 2),
-    .RESET_VAL({(`CPU_WIDTH * 2) {1'b0}})
+    .WIDTH    ((`CPU_WIDTH + 4 + 8 + 3 + 2 + `CPU_WIDTH)),
+    .RESET_VAL({(`CPU_WIDTH + 4 + 8 + 3 + 2 + `CPU_WIDTH) {1'b0}})
   ) u_w_keep_reg (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
-    .i_wen  (i_pre_valid),
-    .i_din  ({i_addr, i_regst}),
-    .o_dout ({awaddr, wdata})
+    .i_wen  (wen),
+    .i_din  ({i_addr, awid + 1'b1, BURST_LEN - 1'b1, awsize_int, BURST_TYPE, wdata_int}),
+    .o_dout ({awaddr, awid, awlen, awsize, awburst, wdata})
   );
 
+  wire [3:0] sb_strb;
+  wire [3:0] sh_strb;
+  wire [3:0] sw_strb;
+
+  assign sb_strb = (4'b0001 << awaddr[1:0]);
+  assign sh_strb = (4'b0011 << awaddr[1:0]);
+  assign sw_strb = (4'b1111 << awaddr[1:0]);
   MuxKeyWithDefault #(
     .NR_KEY  (3),
     .KEY_LEN (4),
@@ -129,7 +153,7 @@ module lsu (
     .out(wstrb),
     .key(lsu_opt),
     .default_out({(`CPU_WIDTH / 8) {1'b0}}),
-    .lut({`LSU_SB, 4'b0001, `LSU_SH, 4'b0011, `LSU_SW, 4'b1111})
+    .lut({`LSU_SB, sb_strb, `LSU_SH, sh_strb, `LSU_SW, sw_strb})
   );
 
   always @(*) begin
@@ -144,76 +168,81 @@ module lsu (
 
   always @(*) begin
     awvalid_next = awvalid_reg && !awready;
-    wvalid_next = wvalid_reg && !wready;
-    awvalid_wait_next = awvalid_wait_reg;
-    wvalid_wait_next = wvalid_wait_reg;
+    wvalid_next  = wvalid_reg && !(wready && wlast);
     if (w_done_reg && wen) begin
-      if (lfsr_delay == 8'b1) begin
-        awvalid_next = 1'b1;
-        wvalid_next  = 1'b1;
-      end else begin
-        awvalid_wait_next = 1'b1;
-        wvalid_wait_next  = 1'b1;
-      end
-    end
-    if (awvalid_wait_reg && wvalid_wait_reg && cnt_done) begin
       awvalid_next = 1'b1;
-      wvalid_next = 1'b1;
-      awvalid_wait_next = 1'b0;
-      wvalid_wait_next = 1'b0;
+      wvalid_next  = 1'b1;
     end
   end
 
+  always @(*) begin
+    write_index_next = write_index_reg;
+    if (w_done_reg && wen) begin
+      write_index_next = 0;
+    end
+    if (wvalid_reg && wready && (write_index_reg != BURST_LEN - 1)) begin
+      write_index_next = write_index_next + 1;
+    end
+  end
+
+  always @(*) begin
+    wlast_next = (write_index_reg == BURST_LEN - 1) && wvalid_reg && wready;
+  end
+
+
   stdreg #(
-    .WIDTH    (5),
-    .RESET_VAL(5'b10000)
+    .WIDTH    (3 + $clog2(BURST_LEN) + 1 + 1),
+    .RESET_VAL({1'b1, {(2 + $clog2(BURST_LEN) + 1 + 1) {1'b0}}})
   ) u_write_reg (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (1'b1),
-    .i_din  ({w_done_next, awvalid_next, wvalid_next, awvalid_wait_next, wvalid_wait_next}),
-    .o_dout ({w_done_reg, awvalid_reg, wvalid_reg, awvalid_wait_reg, wvalid_wait_reg})
+    .i_din  ({w_done_next, awvalid_next, wvalid_next, write_index_next, wlast_next}),
+    .o_dout ({w_done_reg, awvalid_reg, wvalid_reg, write_index_reg, wlast_reg})
   );
 
 
   // assign bready = 1'b1;
   always @(*) begin
     bready_next = 1'b0;
-    bready_wait_next = bready_wait_reg;
     if (bvalid && !bready_reg) begin
-      if (lfsr_delay == 8'b1) begin
-        bready_next = 1'b1;
-      end else begin
-        bready_wait_next = 1'b1;
-      end
-    end
-    if (bready_wait_reg && cnt_done) begin
       bready_next = 1'b1;
-      bready_wait_next = 1'b0;
     end
   end
 
   stdreg #(
-    .WIDTH    (2),
-    .RESET_VAL(2'b0)
+    .WIDTH    (1),
+    .RESET_VAL(1'b0)
   ) u_bready_reg (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (1'b1),
-    .i_din  ({bready_next, bready_wait_next}),
-    .o_dout ({bready_reg, bready_wait_reg})
+    .i_din  ({bready_next}),
+    .o_dout ({bready_reg})
+  );
+
+  wire [2:0] arsize_int;
+  MuxKeyWithDefault #(
+    .NR_KEY  (5),
+    .KEY_LEN (4),
+    .DATA_LEN(3)
+  ) u_arsize_mux (
+    .out(arsize_int),
+    .key(i_opt),
+    .default_out(3'b0),
+    .lut({`LSU_LB, 3'b00, `LSU_LH, 3'b01, `LSU_LW, 3'b10, `LSU_LBU, 3'b00, `LSU_LHU, 3'b01})
   );
 
   // Read SRAM
   stdreg #(
-    .WIDTH(`CPU_WIDTH),
-    .RESET_VAL(`CPU_WIDTH'b0)
+    .WIDTH    (`CPU_WIDTH + 4 + 8 + 3 + 2),
+    .RESET_VAL({(`CPU_WIDTH + 4 + 8 + 3 + 2) {1'b0}})
   ) u_r_keep_reg (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
-    .i_wen  (i_pre_valid),
-    .i_din  (i_addr),
-    .o_dout (araddr)
+    .i_wen  (ren),
+    .i_din  ({i_addr, arid + 1'b1, BURST_LEN - 1'b1, arsize_int, BURST_TYPE}),
+    .o_dout ({araddr, arid, arlen, arsize, arburst})
   );
 
   always @(*) begin
@@ -221,37 +250,31 @@ module lsu (
     if (ren) begin
       r_done_next = 1'b0;
     end
-    if (rvalid && rready_reg) begin
+    if (rvalid && rready_reg && rlast) begin
       r_done_next = 1'b1;
     end
   end
 
   always @(*) begin
     arvalid_next = arvalid_reg && !arready;
-    arvalid_wait_next = arvalid_wait_reg;
     if (r_done_reg && ren) begin
-      if (lfsr_delay == 8'b1) begin
-        arvalid_next = 1'b1;
-      end else begin
-        arvalid_wait_next = 1'b1;
-      end
-    end
-    if (arvalid_wait_reg && cnt_done) begin
       arvalid_next = 1'b1;
-      arvalid_wait_next = 1'b0;
     end
   end
 
   stdreg #(
-    .WIDTH    (3),
-    .RESET_VAL({3'b100})
+    .WIDTH    (2),
+    .RESET_VAL({2'b10})
   ) u_read_reg (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (1'b1),
-    .i_din  ({r_done_next, arvalid_next, arvalid_wait_next}),
-    .o_dout ({r_done_reg, arvalid_reg, arvalid_wait_reg})
+    .i_din  ({r_done_next, arvalid_next}),
+    .o_dout ({r_done_reg, arvalid_reg})
   );
+
+  wire [`CPU_WIDTH-1:0] rdata_int;
+  assign rdata_int = rdata >> ((araddr & 2'b11) << 3);
 
   MuxKeyWithDefault #(
     .NR_KEY  (5),
@@ -263,61 +286,39 @@ module lsu (
     .default_out(`CPU_WIDTH'b0),
     .lut({
       `LSU_LB,
-      {{24{rdata[7]}}, rdata[7:0]},
+      {{24{rdata_int[7]}}, rdata_int[7:0]},
       `LSU_LH,
-      {{16{rdata[15]}}, rdata[15:0]},
+      {{16{rdata_int[15]}}, rdata_int[15:0]},
       `LSU_LW,
-      rdata,
+      rdata_int,
       `LSU_LBU,
-      {24'b0, rdata[7:0]},
+      {24'b0, rdata_int[7:0]},
       `LSU_LHU,
-      {16'b0, rdata[15:0]}
+      {16'b0, rdata_int[15:0]}
     })
   );
 
 
   // assign rready = 1'b1;
   always @(*) begin
-    rready_next = 1'b0;
-    rready_wait_next = rready_wait_reg;
+    rready_next = rready_reg && !(rvalid && rlast);
     if (rvalid && !rready_reg) begin
-      if (lfsr_delay == 8'b1) begin
-        rready_next = 1'b1;
-      end else begin
-        rready_wait_next = 1'b1;
-      end
-    end
-    if (rready_wait_reg && cnt_done) begin
       rready_next = 1'b1;
-      rready_wait_next = 1'b0;
     end
   end
 
   stdreg #(
-    .WIDTH    (2),
-    .RESET_VAL(2'b0)
+    .WIDTH    (1),
+    .RESET_VAL(1'b0)
   ) u_rready_reg (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (1'b1),
-    .i_din  ({rready_next, rready_wait_next}),
-    .o_dout ({rready_reg, rready_wait_reg})
+    .i_din  ({rready_next}),
+    .o_dout ({rready_reg})
   );
 
 
-  stdreg #(
-    .WIDTH    (2),
-    .RESET_VAL(2'b0)
-  ) u_B_R_valid_reg (
-    .i_clk  (i_clk),
-    .i_rst_n(i_rst_n),
-    .i_wen  (1'b1),
-    .i_din  ({bvalid, rvalid}),
-    .o_dout ({bvalid_reg, rvalid_reg})
-  );
-
-  assign rvalid_pulse = rvalid && !rvalid_reg;
-  assign bvalid_pulse = bvalid && !bvalid_reg;
 
   stdreg #(
     .WIDTH    (1),
@@ -328,28 +329,6 @@ module lsu (
     .i_wen  (1'b1),
     .i_din  (i_pre_valid),
     .o_dout (valid_r)
-  );
-
-`ifdef LFSR
-  lfsr_8bit #(
-    .SEED (8'd2),
-    .WIDTH(8)
-  ) u_lfsr_8bit (
-    .clk_i        (i_clk),
-    .rst_ni       (i_rst_n),
-    .en_i         (wen || ren || rvalid_pulse || bvalid_pulse),  // 1'b1
-    .refill_way_oh(lfsr_delay)
-  );
-`else
-  assign lfsr_delay = `SRAM_DELAY;
-`endif
-
-  delay_counter u_delay_counter (
-    .i_clk(i_clk),
-    .i_rst_n(i_rst_n),
-    .i_ena(wen || ren || rvalid_pulse || bvalid_pulse),  // 1clk pulse
-    .i_bound(lfsr_delay - 1'b1),  //minus 1 is the real delay
-    .o_done(cnt_done)
   );
 
 

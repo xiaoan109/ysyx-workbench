@@ -22,9 +22,9 @@ extern "C" svBit check_finish(int instr){
     return 0;
 }
 
-extern "C" void rtl_pmem_write(uint32_t waddr, uint32_t wdata, const svBitVecVal* wmask, svBit wen){
+extern "C" void pmem_write(uint32_t waddr, uint32_t wdata, const svBitVecVal* wmask, svBit wen){
   IFDEF(MTRACE_ON, if(wen) printf("waddr = 0x%08x,wdata = 0x%08x,wmask = 0x%x\n", waddr,wdata,*wmask));
-  // waddr = waddr & ~0x3u;  //clear low 2bit for 4byte align.
+  waddr = waddr & ~0x3u;  //clear low 2bit for 4byte align.
   if (waddr == 0xa0000000 + 0x0000000 && wen){ //UART
     IFDEF(DIFFTEST_ON, is_skip_ref = true);
     if(*wmask) {
@@ -36,16 +36,16 @@ extern "C" void rtl_pmem_write(uint32_t waddr, uint32_t wdata, const svBitVecVal
 
   if(wen) {
     switch (*wmask) {
-      case 1:   pmem_write(waddr, wdata, 1); break; // 0001, 1byte.
-      case 3:   pmem_write(waddr, wdata, 2); break; // 0011, 2byte.
-      case 15:  pmem_write(waddr, wdata, 4); break; // 1111, 4byte.
+      case 1:   _pmem_write(waddr, wdata, 1); break; // 0001, 1byte.
+      case 3:   _pmem_write(waddr, wdata, 2); break; // 0011, 2byte.
+      case 15:  _pmem_write(waddr, wdata, 4); break; // 1111, 4byte.
       default:  break;
     }
   }
 }
 
-extern "C" void rtl_pmem_read(uint32_t raddr,uint32_t *rdata, svBit ren){
-  // raddr = raddr & ~0x3u;  //clear low 2bit for 4byte align.
+extern "C" void pmem_read(uint32_t raddr,uint32_t *rdata, svBit ren){
+  raddr = raddr & ~0x3u;  //clear low 2bit for 4byte align.
   if (raddr == 0xa0000000 + 0x0002000 && ren){ //TIMER
     IFDEF(DIFFTEST_ON, is_skip_ref = true);
     us = get_time();
@@ -56,7 +56,7 @@ extern "C" void rtl_pmem_read(uint32_t raddr,uint32_t *rdata, svBit ren){
     *rdata = (uint32_t)(us >> 32);
   }
   else if (ren && raddr>=PMEM_START && raddr<=PMEM_END){
-    *rdata = pmem_read(raddr,4);
+    *rdata = _pmem_read(raddr,4);
     IFDEF(MTRACE_ON, printf("raddr = 0x%08x,rdata = 0x%08x\n",raddr,*rdata));
   }
   else //avoid latch.
@@ -87,6 +87,15 @@ extern "C" void diff_read_status(svBit rtl_status){
 
 extern "C" void difftest_skip(){
  IFDEF(DIFFTEST_ON, is_skip_ref = true);
+}
+
+// SOC
+extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void mrom_read(int32_t addr, int32_t *data) { 
+  // assert(0);
+  // *data = 0x100073;
+  addr = addr & ~0x3u;  //clear low 2bit for 4byte align.
+  *data = _pmem_read(addr, 4);
 }
 
 

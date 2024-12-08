@@ -2,7 +2,6 @@
 module axi_lite_uart (
   input                          i_clk,
   input                          i_rst_n,
-  /* verilator lint_off UNUSEDSIGNAL */
   //AW Channel
   input  wire [  `CPU_WIDTH-1:0] awaddr,
   input  wire                    awvalid,
@@ -25,7 +24,6 @@ module axi_lite_uart (
   output wire [             1:0] rresp,
   output wire                    rvalid,
   input  wire                    rready
-  /* verilator lint_on UNUSEDSIGNAL */
 );
 
 
@@ -183,14 +181,14 @@ module axi_lite_uart (
   end
 
 
-  // import "DPI-C" function void rtl_pmem_write(
+  // import "DPI-C" function void pmem_write(
   //   input int       waddr,
   //   input int       wdata,
   //   input bit [3:0] wmask,
   //   input bit       wen
   // );
   // always @(*) begin
-  //   rtl_pmem_write(awaddr, wdata, wstrb, reg_wen);
+  //   pmem_write(awaddr, wdata, wstrb, reg_wen);
   // end
 
 endmodule

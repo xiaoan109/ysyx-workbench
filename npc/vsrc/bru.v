@@ -12,6 +12,8 @@ module bru (
   input                   i_mret,
   input  [`CPU_WIDTH-1:0] i_mtvec,
   input  [`CPU_WIDTH-1:0] i_mepc,
+  input                   i_ifu_access_fault,  //TODO: Temporary
+  input                   i_lsu_access_fault,  //TODO: Temporary
   output [`CPU_WIDTH-1:0] o_pc,
   input                   i_lsu_valid,
   input                   i_idu_valid
@@ -21,10 +23,11 @@ module bru (
   wire [`CPU_WIDTH-1:0] pc_reg;
   wire                  except;
   wire [`CPU_WIDTH-1:0] except_pc;
+  wire [`CPU_WIDTH-1:0] pc_mux;
 
   assign except = i_ecall | i_mret;
   assign except_pc = i_ecall ? i_mtvec : i_mret ? i_mepc : `CPU_WIDTH'b0;
-  assign pc_next = except ? except_pc : (i_brch && ~i_zero || i_jal) ? (o_pc + i_imm) : i_jalr ? (i_rs1 + i_imm) : (o_pc + 4) ;
+  assign pc_next = i_ifu_access_fault ? `CPU_WIDTH'b0 : except ? except_pc : (i_brch && ~i_zero || i_jal) ? (o_pc + i_imm) : i_jalr ? (i_rs1 + i_imm) : (o_pc + 4) ;
 
   stdreg #(
     .WIDTH    (`CPU_WIDTH),
@@ -37,6 +40,7 @@ module bru (
     .o_dout (pc_reg)
   );
 
+  assign pc_mux = i_lsu_access_fault ? `CPU_WIDTH'b0 : pc_reg;
 
   stdreg #(
     .WIDTH    (`CPU_WIDTH),
@@ -45,7 +49,7 @@ module bru (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (i_lsu_valid),
-    .i_din  (pc_reg),
+    .i_din  (pc_mux),
     .o_dout (o_pc)
   );
 

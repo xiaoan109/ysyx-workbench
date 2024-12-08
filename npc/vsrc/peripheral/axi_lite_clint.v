@@ -2,7 +2,6 @@
 module axi_lite_clint (
   input                          i_clk,
   input                          i_rst_n,
-  /* verilator lint_off UNUSEDSIGNAL */
   //AW Channel
   input  wire [  `CPU_WIDTH-1:0] awaddr,
   input  wire                    awvalid,
@@ -25,7 +24,6 @@ module axi_lite_clint (
   output wire [             1:0] rresp,
   output wire                    rvalid,
   input  wire                    rready
-  /* verilator lint_on UNUSEDSIGNAL */
 );
 
   reg                     reg_ren;

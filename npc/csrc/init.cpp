@@ -20,7 +20,6 @@ static int parse_args(int argc, char *argv[]) {
   return 0;
 }
 
-extern uint8_t pmem[PMEM_MSIZE];  // use for load_img
 static long load_img(char *img_file) {
   if (img_file == NULL) {
     printf("No image is given. Use the default build-in image.\n");
@@ -39,11 +38,10 @@ static long load_img(char *img_file) {
   //printf("The image is %s, size = %ld\n", img_file, size);
 
   fseek(fp, 0, SEEK_SET);
-  int ret = fread(pmem, size, 1, fp);
+  // int ret = fread(pmem, size, 1, fp);
+  int ret = fread(guest_to_host(INST_START), size, 1, fp);
   assert(ret == 1);
 
-  //for(uint32_t i=0;i<size;i=i+4)
-  //  printf("0x%08x, 0x%08lx\n",PMEM_START+i,pmem_read(PMEM_START+i,4));
 
   fclose(fp);
   return size;

@@ -6,9 +6,7 @@ module alu (
   output reg [    `CPU_WIDTH-1:0] o_alu_res,
   output reg                      o_sububit
 );
-  /* verilator lint_off UNUSEDSIGNAL */
   wire [63:0] tmp_res;
-  /* verilator lint_on UNUSEDSIGNAL */
   
   always @(*) begin
     o_alu_res = `CPU_WIDTH'b0;

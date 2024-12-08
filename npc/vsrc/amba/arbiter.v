@@ -28,8 +28,6 @@ THE SOFTWARE.
  * Arbiter module
  */
 
-// verilator lint_off WIDTHEXPAND
-// verilator lint_off WIDTHTRUNC
 module arbiter #(
   parameter PORTS = 4,
   // select round robin arbitration
@@ -42,7 +40,7 @@ module arbiter #(
   parameter ARB_LSB_HIGH_PRIORITY = 0
 ) (
   input wire clk,
-  input wire rst_n,
+  input wire rst,
 
   input wire [PORTS-1:0] request,
   input wire [PORTS-1:0] acknowledge,
@@ -154,12 +152,10 @@ module arbiter #(
     .RESET_VAL({(PORTS + 1 + $clog2(PORTS) + PORTS) {1'b0}})
   ) u_reg (
     .i_clk  (clk),
-    .i_rst_n(rst_n),
+    .i_rst_n(!rst),
     .i_wen  (1'b1),
     .i_din  ({grant_next, grant_valid_next, grant_encoded_next, mask_next}),
     .o_dout ({grant_reg, grant_valid_reg, grant_encoded_reg, mask_reg})
   );
 
 endmodule
-// verilator lint_on WIDTHEXPAND
-// verilator lint_on WIDTHTRUNC

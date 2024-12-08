@@ -1,8 +1,7 @@
 `include "defines.vh"
 
-/* verilator lint_off WIDTHTRUNC */
-/* verilator lint_off WIDTHEXPAND */
-module axi_lite_xbar #(
+
+module axi_lite_interconnect #(
   parameter S_COUNT = 2,
   parameter M_COUNT = 2,
   parameter M_BASE_ADDR = 0,
@@ -65,7 +64,7 @@ module axi_lite_xbar #(
 
 
   // default address computation
-  function [M_COUNT * `CPU_WIDTH-1:0] calcBaseAddrs();
+  function [M_COUNT * `CPU_WIDTH-1:0] calcBaseAddrs(input [31:0] dummy);
     integer i;
     reg [`CPU_WIDTH-1:0] base;
     reg [`CPU_WIDTH-1:0] width;
@@ -89,7 +88,7 @@ module axi_lite_xbar #(
     end
   endfunction
 
-  localparam M_BASE_ADDR_INT = M_BASE_ADDR ? M_BASE_ADDR : calcBaseAddrs();
+  localparam M_BASE_ADDR_INT = M_BASE_ADDR ? M_BASE_ADDR : calcBaseAddrs(0);
 
   integer i;
 
@@ -211,7 +210,7 @@ module axi_lite_xbar #(
     .ARB_LSB_HIGH_PRIORITY(1)
   ) arb_inst (
     .clk(i_clk),
-    .rst_n(i_rst_n),
+    .rst(!i_rst_n),
     .request(request),
     .acknowledge(acknowledge),
     .grant(grant),
@@ -435,5 +434,3 @@ module axi_lite_xbar #(
 
 
 endmodule
-/* verilator lint_on WIDTHTRUNC */
-/* verilator lint_on WIDTHEXPAND */

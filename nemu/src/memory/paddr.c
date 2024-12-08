@@ -18,6 +18,9 @@
 #include <device/mmio.h>
 #include <isa.h>
 
+
+#ifndef CONFIG_TARGET_SHARE
+
 #if   defined(CONFIG_PMEM_MALLOC)
 static uint8_t *pmem = NULL;
 #else // CONFIG_PMEM_GARRAY
@@ -84,3 +87,55 @@ void paddr_write(paddr_t addr, int len, word_t data) {
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
   out_of_bound(addr);
 }
+
+#else
+
+
+static uint8_t mrom[0x1000] PG_ALIGN = {};
+static uint8_t sram[0x1000000] PG_ALIGN = {};
+
+static void out_of_bound(paddr_t addr) {
+  panic("address = " FMT_PADDR " is out of bound of pmem [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
+      addr, PMEM_LEFT, PMEM_RIGHT, cpu.pc);
+}
+
+
+uint8_t* guest_to_host(paddr_t paddr) {
+  if(paddr >= 0x0f000000 && paddr <= 0x0fffffff) {
+    return sram + paddr - 0x0f000000;
+  } else if(paddr >= 0x20000000 && paddr <= 0x20000fff) {
+    return mrom + paddr - 0x20000000;
+  } else {
+    out_of_bound(paddr);
+    assert(0);
+  }
+}
+
+paddr_t host_to_guest(uint8_t *haddr) { return 0; }
+
+static word_t pmem_read(paddr_t addr, int len) {
+  word_t ret = host_read(guest_to_host(addr), len);
+  // Log(" MTRACE: Read  Memory Address: 0x%x, len: %d, data: 0x%x", addr, len, ret);
+  return ret;
+}
+
+static void pmem_write(paddr_t addr, int len, word_t data) {
+  // Log("MTRACE: Write Memory Address: 0x%x, len: %d, data: 0x%x", addr, len, data);
+  host_write(guest_to_host(addr), len, data);
+}
+
+word_t paddr_read(paddr_t addr, int len) {
+  return pmem_read(addr, len);
+}
+
+void paddr_write(paddr_t addr, int len, word_t data) {
+  pmem_write(addr, len, data);
+}
+
+void init_mem() {
+  IFDEF(CONFIG_MEM_RANDOM, memset(sram, 0, 0x1000000));
+  IFDEF(CONFIG_MEM_RANDOM, memset(mrom, rand(), 0x1000));
+  Log("physical memory area [" FMT_PADDR ", " FMT_PADDR "]", PMEM_LEFT, PMEM_RIGHT);
+}
+
+#endif

@@ -1,6 +1,5 @@
 `include "defines.vh"
 
-// verilator lint_off WIDTHTRUNC
 module axi_lite_arbiter #(
   parameter S_COUNT = 2
 ) (
@@ -156,7 +155,7 @@ module axi_lite_arbiter #(
     .ARB_LSB_HIGH_PRIORITY(1)
   ) arb_inst (
     .clk(i_clk),
-    .rst_n(i_rst_n),
+    .rst(!i_rst_n),
     .request(request),
     .acknowledge(acknowledge),
     .grant(grant),
@@ -372,4 +371,3 @@ module axi_lite_arbiter #(
 
 
 endmodule
-// verilator lint_on WIDTHTRUNC
