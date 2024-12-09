@@ -16,7 +16,7 @@ bash init.sh subproject-name
 
 **3. 后续会逐渐把Verilator替换为SV+UVM或者Python+cocotb等更适合于业界的验证平台**
 
-# 架构图
+# NPC架构图
 DVT自动生成
 
-![image](/npc/schematic_of_top.png)
+![image](/npc/schematic_of_u_top_top.png)
