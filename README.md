@@ -19,4 +19,4 @@ bash init.sh subproject-name
 # NPC架构图
 DVT自动生成
 
-![image](/npc/schematic_of_u_top_top.png)
+![image](/npc/schematic_of_u_top_top_.png)
