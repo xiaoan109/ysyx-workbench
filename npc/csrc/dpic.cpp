@@ -90,12 +90,43 @@ extern "C" void difftest_skip(){
 }
 
 // SOC
-extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void flash_read(int32_t addr, int32_t *data) {
+  addr = FLASH_START + addr; // SPI2FLASH only cares low 24bits i.e. 16MB
+  if(addr>=FLASH_START && addr<=FLASH_END) {
+    addr = addr & ~0x3u;
+    uint32_t temp = _pmem_read(addr, 4);
+    // Flash endianness convert
+    *data = ((temp & 0x000000FF) <<24) + ((temp & 0x0000FF00) <<8) + ((temp & 0x00FF0000) >>8) + ((temp & 0xFF000000) >>24);
+    // printf("flash_read addr: 0x%08x data: 0x%08x\n", addr, temp);
+  }
+}
+
 extern "C" void mrom_read(int32_t addr, int32_t *data) { 
   // assert(0);
   // *data = 0x100073;
-  addr = addr & ~0x3u;  //clear low 2bit for 4byte align.
-  *data = _pmem_read(addr, 4);
+  if(addr>=MROM_START && addr<=MROM_END) {
+    addr = addr & ~0x3u;  //clear low 2bit for 4byte align.
+    *data = _pmem_read(addr, 4);
+  }
+}
+
+extern "C" void psram_read(int32_t addr, int32_t *data) {
+  addr = PSRAM_START + addr; // SPI2PSRAM only cares low 24bits i.e. 16MB
+  if(addr>=PSRAM_START && addr<=PSRAM_END) {
+    // addr = addr & ~0x3u;
+    *data = _pmem_read(addr, 4);
+    // printf("psram_read addr: 0x%08x data: 0x%08x\n", addr, *data);
+  }
+}
+
+extern "C" void psram_write(int32_t addr, int32_t data, int32_t mask) {
+  addr = PSRAM_START + addr; // SPI2FLASH only cares low 24bits i.e. 16MB
+  if(addr>=PSRAM_START && addr<=PSRAM_END) {
+    // addr = addr & ~0x3u;
+    uint32_t wdata = data >> ((8-mask)*4);
+    _pmem_write(addr, wdata, mask/2);
+    // printf("psram_write addr: 0x%08x data: 0x%08x\n", addr, data);
+  }
 }
 
 

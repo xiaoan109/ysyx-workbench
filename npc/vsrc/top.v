@@ -586,14 +586,14 @@ module top (
     // Propagate ID field
     .FORWARD_ID(1),
     // Number of regions per master interface
-    .M_REGIONS(3),  //MROM & SRAM & UART: m_axi_port1, CLINT: m_axi_port0
+    .M_REGIONS(`MEM_AXI_REGION),  
     // Master interface base addresses
     // M_COUNT concatenated fields of M_REGIONS concatenated fields of ADDR_WIDTH bits
     // set to zero for default addressing based on M_ADDR_WIDTH
-    .M_BASE_ADDR({{32'h1000_0000, 32'h0f00_0000, 32'h2000_0000}, {32'h0, 32'h0, 32'h0200_0000}}),
+    .M_BASE_ADDR(`AXI_MASTER_BASE_ADDR),
     // Master interface address widths
     // M_COUNT concatenated fields of M_REGIONS concatenated fields of 32 bits
-    .M_ADDR_WIDTH({{32'd12, 32'd24, 32'd12}, {32'd0, 32'd0, 32'd16}})
+    .M_ADDR_WIDTH(`AXI_MASTER_ADDR_WIDTH)
   ) u_axi_interconnect (
     .clk(i_clk),
     .rst(!rst_n_sync),

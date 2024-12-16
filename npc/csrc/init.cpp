@@ -4,6 +4,9 @@
 static char *img_file = NULL;
 static char *diff_so_file = NULL;
 
+
+// void prog_flash(bool use_init_file, char *flash_file); // TODO: Temp
+
 static int parse_args(int argc, char *argv[]) {
   const struct option table[] = {
     {"img"      , required_argument, NULL, 'i'},
@@ -35,7 +38,7 @@ static long load_img(char *img_file) {
   fseek(fp, 0, SEEK_END); // move cur to end.
   long size = ftell(fp);
 
-  //printf("The image is %s, size = %ld\n", img_file, size);
+  printf("The image is %s, size = %ld\n", img_file, size);
 
   fseek(fp, 0, SEEK_SET);
   // int ret = fread(pmem, size, 1, fp);
@@ -58,4 +61,8 @@ void npc_init(int argc, char *argv[]) {
 
   /* Initialize differential testing. */
   IFDEF(DIFFTEST_ON, difftest_init(diff_so_file, img_size));
+
+  // char *flash_file = (char *)"/home/ysyx/ysyx-workbench/am-kernels/tests/cpu-tests/build/char-test-riscv32e-ysyxsoc.bin";
+  // bool use_init_file = 1;
+  // prog_flash(use_init_file, flash_file);
 }

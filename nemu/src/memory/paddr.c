@@ -93,6 +93,8 @@ void paddr_write(paddr_t addr, int len, word_t data) {
 
 static uint8_t mrom[0x1000] PG_ALIGN = {};
 static uint8_t sram[0x1000000] PG_ALIGN = {};
+static uint8_t flash[0x10000000] PG_ALIGN = {};
+static uint8_t psram[0x20000000] PG_ALIGN = {};
 
 static void out_of_bound(paddr_t addr) {
   panic("address = " FMT_PADDR " is out of bound of pmem [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
@@ -105,6 +107,10 @@ uint8_t* guest_to_host(paddr_t paddr) {
     return sram + paddr - 0x0f000000;
   } else if(paddr >= 0x20000000 && paddr <= 0x20000fff) {
     return mrom + paddr - 0x20000000;
+  } else if(paddr >= 0x30000000 && paddr <= 0x3fffffff) {
+    return flash + paddr - 0x30000000;
+  } else if(paddr >= 0x80000000 && paddr <= 0x9fffffff) {
+    return psram + paddr - 0x80000000;
   } else {
     out_of_bound(paddr);
     assert(0);
@@ -135,6 +141,8 @@ void paddr_write(paddr_t addr, int len, word_t data) {
 void init_mem() {
   IFDEF(CONFIG_MEM_RANDOM, memset(sram, 0, 0x1000000));
   IFDEF(CONFIG_MEM_RANDOM, memset(mrom, rand(), 0x1000));
+  IFDEF(CONFIG_MEM_RANDOM, memset(flash, rand(), 0x10000000));
+  IFDEF(CONFIG_MEM_RANDOM, memset(psram, 0, 0x20000000));
   Log("physical memory area [" FMT_PADDR ", " FMT_PADDR "]", PMEM_LEFT, PMEM_RIGHT);
 }
 

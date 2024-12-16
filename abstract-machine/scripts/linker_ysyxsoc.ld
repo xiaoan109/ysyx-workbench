@@ -1,27 +1,50 @@
 ENTRY(_start)
-PHDRS { text PT_LOAD; data PT_LOAD; }
+/* PHDRS { text PT_LOAD; data PT_LOAD; bss PT_LOAD; } */
 
 MEMORY {
-  mrom : ORIGIN = 0x20000000, LENGTH = 4K
-  sram : ORIGIN = 0x0f000000, LENGTH = 8K
+  mrom  : ORIGIN = 0x20000000, LENGTH = 4K
+  sram  : ORIGIN = 0x0f000000, LENGTH = 8K
+  flash : ORIGIN = 0x30000000, LENGTH = 64M
+  psram : ORIGIN = 0x80000000, LENGTH = 4M
 }
 
 SECTIONS {
   /* _pmem_start and _entry_offset are defined in LDFLAGS */
-  . = ORIGIN(mrom);
-  .text : 
-  {
-    *(entry)
-    *(.text*)
-  } > mrom AT >mrom : text
+  . = ORIGIN(flash);
 
-  .rodata : 
+  fsbl :{
+    _fsbl = .;
+    *(entry)
+    *(.text._trm_init)
+    *(.text.fsbl)
+    . = ALIGN(4);
+    _efsbl = .;
+  } > flash AT >flash
+
+  ssbl :{
+    _ssbl = .;
+    *(.text.ssbl)
+    . = ALIGN(4);
+    _essbl = .;
+  } > sram AT >flash
+
+  _test_origin = LOADADDR(.text);
+  .text :
+  {
+    _text = .;
+    *(.text*)
+    . = ALIGN(4);
+    _etext = .;
+  } > psram AT >flash
+
+  .rodata :
   {
     _rodata = .;
     *(.rodata*)
     *(.srodata*)
+    . = ALIGN(4);
     _erodata = .;
-  } > mrom AT >mrom
+  } > psram AT >flash
 
   .data :
   {
@@ -30,22 +53,25 @@ SECTIONS {
     *(.sdata*)
     . = ALIGN(4);
     _edata = .;
-  } > sram AT >mrom : data
-  
-  .bss : 
+  } > psram AT >flash
+
+  .bss :
   {
-	  _bstart = .;
+    _bstart = .;
     *(.bss*)
     *(.sbss*)
     *(.scommon)
+    . = ALIGN(4);
     _bend = .;
-  } > sram AT >mrom
+  } > psram AT >flash
 
-  _stack_top = ALIGN(4);
-  . = _stack_top + 0x800;
-  _stack_pointer = .;
   end = .;
   _end = .;
+
   _heap_start = ALIGN(4);
-  _heap_end = _heap_start + 0x400;
+  _heap_end = _heap_start + 0x40000;
+
+  _stack_top = _sram_start;
+  . = _stack_top + LENGTH(sram) - 0x100;
+  _stack_pointer = .;
 }

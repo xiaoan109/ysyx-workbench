@@ -6,12 +6,24 @@
 
 
 #define UART16550       0x10000000
-#define UART_TX         UART16550 + 0x0
+#define UART_REG_TX     UART16550 + 0x0
+#define UART_REG_LC     UART16550 + 0x3
+#define UART_REG_DL1    UART16550 + 0x0 //LSB
+#define UART_REG_DL2    UART16550 + 0x1 //MSB
+#define UART_REG_LS     UART16550 + 0x5
 #define CLINT           0x02000000
-
-extern char _mrom_start;
-#define MROM_SIZE (4 * 1024)
-#define MROM_END  ((uintptr_t)&_mrom_start + MROM_SIZE)
+#define SPI             0x10001000
+#define SPI_RX0         SPI + 0x0
+#define SPI_RX1         SPI + 0x4
+#define SPI_RX2         SPI + 0x8
+#define SPI_RX3         SPI + 0xc
+#define SPI_TX0         SPI + 0x0
+#define SPI_TX1         SPI + 0x4
+#define SPI_TX2         SPI + 0x8
+#define SPI_TX3         SPI + 0xc
+#define SPI_CTRL        SPI + 0x10
+#define SPI_DIV         SPI + 0x14
+#define SPI_SS          SPI + 0x18
 
 typedef uintptr_t PTE;
 

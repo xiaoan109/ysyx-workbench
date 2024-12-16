@@ -30,17 +30,23 @@ module csrfile (
   wire [`CPU_WIDTH-1:0] mtvec;  // Machine trap-handler base address
   wire [`CPU_WIDTH-1:0] mcause;  // Machine trap cause
   wire [`CPU_WIDTH-1:0] mstatus;  // Machine status register
+  wire [`CPU_WIDTH-1:0] mvendorid;  // Machine vendor id register
+  wire [`CPU_WIDTH-1:0] marchid ;  // Machine architecture id register
 
   // 2. read csr  reg file: ////////////////////////////////////////////////////////////
   wire ren_mepc = i_ren & (i_raddr == `ADDR_MEPC);
   wire ren_mtvec = i_ren & (i_raddr == `ADDR_MTVEC);
   wire ren_mcause = i_ren & (i_raddr == `ADDR_MCAUSE);
   wire ren_mstatus = i_ren & (i_raddr == `ADDR_MSTATUS);
+  wire ren_mvendorid = i_ren & (i_raddr == `ADDR_MVENDORID);
+  wire ren_marchid = i_ren & (i_raddr == `ADDR_MARCHID);
 
-  assign o_rdata =  ren_mepc     ? mepc     : 
-                  ( ren_mtvec    ? mtvec    : 
-                  ( ren_mcause   ? mcause   : 
-                  ( ren_mstatus  ? mstatus  : `CPU_WIDTH'b0)));
+  assign o_rdata =  ren_mepc      ? mepc      : 
+                  ( ren_mtvec     ? mtvec     : 
+                  ( ren_mcause    ? mcause    : 
+                  ( ren_mstatus   ? mstatus   : 
+                  ( ren_mvendorid ? mvendorid : 
+                  ( ren_marchid   ? marchid   : `CPU_WIDTH'b0)))));
 
   assign o_mtvec = mtvec;
   assign o_mepc = mepc;
@@ -106,6 +112,32 @@ module csrfile (
     .i_wen  (wen_mstatus),
     .i_din  (wdata_mstatus),
     .o_dout (mstatus)
+  );
+
+  // 3.5 mvendorid: //////////////////////////////////////////////////////////////////////////
+
+  stdreg #(
+    .WIDTH    (`CPU_WIDTH),
+    .RESET_VAL(`CPU_WIDTH'h79737978)
+  ) reg_mvendorid (
+    .i_clk  (i_clk),
+    .i_rst_n(i_rst_n),
+    .i_wen  (1'b0),
+    .i_din  (`CPU_WIDTH'b0),
+    .o_dout (mvendorid)
+  );
+
+  // 3.5 marchid: //////////////////////////////////////////////////////////////////////////
+
+  stdreg #(
+    .WIDTH    (`CPU_WIDTH),
+    .RESET_VAL(`CPU_WIDTH'hbc614e)
+  ) reg_marchid (
+    .i_clk  (i_clk),
+    .i_rst_n(i_rst_n),
+    .i_wen  (1'b0),
+    .i_din  (`CPU_WIDTH'b0),
+    .o_dout (marchid)
   );
 
   //for sim:  ////////////////////////////////////////////////////////////////////////////////////////////

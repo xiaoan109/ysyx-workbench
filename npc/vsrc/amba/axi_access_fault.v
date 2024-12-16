@@ -50,11 +50,11 @@ module axi_access_fault (
     access_fault_next = 1'b0;
     if (bready && bvalid && bresp != 2'b0) begin
       access_fault_next = 1'b1;
-      $fatal(0, "AXI Access Fault BRESP=%b", bresp);
+      $fatal(0, "AXI Access Fault BRESP=%b, AWADDR=%h", bresp, awaddr);
     end
     if (rready && rvalid && rresp != 2'b0) begin
       access_fault_next = 1'b1;
-      $fatal(0, "AXI Access Fault RRESP=%b", rresp);
+      $fatal(0, "AXI Access Fault RRESP=%b, ARADDR=%h", rresp, araddr);
     end
   end
 

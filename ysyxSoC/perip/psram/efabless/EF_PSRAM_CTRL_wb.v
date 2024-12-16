@@ -1,3 +1,4 @@
+
 /*
 	Copyright 2020 Efabless Corp.
 
@@ -39,8 +40,9 @@ module EF_PSRAM_CTRL_wb (
     output  wire [3:0]      douten
 );
 
-    localparam  ST_IDLE = 1'b0,
-                ST_WAIT = 1'b1;
+    localparam  ST_INIT = 2'd0,
+                ST_IDLE = 2'd1,
+                ST_WAIT = 2'd2;
 
     wire        mr_sck;
     wire        mr_ce_n;
@@ -53,6 +55,13 @@ module EF_PSRAM_CTRL_wb (
     wire [3:0]  mw_din;
     wire [3:0]  mw_dout;
     wire        mw_doe;
+
+    reg         init_start;
+    wire        init_done;
+    wire        init_sck;
+    wire        init_ce_n;
+    wire [3:0]  init_dout;
+    wire        init_doe;
 
     // PSRAM Reader and Writer wires
     wire        mr_rd;
@@ -69,15 +78,28 @@ module EF_PSRAM_CTRL_wb (
     //wire[3:0]   wb_byte_sel     =   sel_i & {4{wb_we}};
 
     // The FSM
-    reg         state, nstate;
+    reg  [1:0]    state, nstate;
     always @ (posedge clk_i or posedge rst_i)
         if(rst_i)
-            state <= ST_IDLE;
+            state <= ST_INIT;
         else
             state <= nstate;
 
+    always @(*) begin
+        if(state == ST_INIT)
+            init_start  = 1'b1;
+        else
+            init_start  = 1'b0;
+    end
+
     always @* begin
         case(state)
+            ST_INIT :begin
+                if(init_done)
+                    nstate = ST_IDLE;
+                else
+                    nstate = ST_INIT;
+            end
             ST_IDLE :
                 if(wb_valid)
                     nstate = ST_WAIT;
@@ -89,6 +111,8 @@ module EF_PSRAM_CTRL_wb (
                     nstate = ST_IDLE;
                 else
                     nstate = ST_WAIT;
+            default :
+                nstate = ST_IDLE;
         endcase
     end
 
@@ -161,10 +185,21 @@ module EF_PSRAM_CTRL_wb (
         .douten(mw_doe)
     );
 
-    assign sck  = wb_we ? mw_sck  : mr_sck;
-    assign ce_n = wb_we ? mw_ce_n : mr_ce_n;
-    assign dout = wb_we ? mw_dout : mr_dout;
-    assign douten  = wb_we ? {4{mw_doe}}  : {4{mr_doe}};
+    PSRAM_INIT INIT(
+        .clk    (clk_i),
+        .rst_n  (~rst_i),
+        .start  (init_start),
+        .done   (init_done),
+        .sck    (init_sck),
+        .ce_n   (init_ce_n),
+        .dout   (init_dout),
+        .douten (init_doe)
+    );
+
+    assign sck  =    (state == ST_INIT) ? init_sck  : wb_we ? mw_sck  : mr_sck;
+    assign ce_n =    (state == ST_INIT) ? init_ce_n : wb_we ? mw_ce_n : mr_ce_n;
+    assign dout =    (state == ST_INIT) ? init_dout : wb_we ? mw_dout : mr_dout;
+    assign douten  = (state == ST_INIT) ? {4{init_doe}}  : wb_we ? {4{mw_doe}}  : {4{mr_doe}};
 
     assign mw_din = din;
     assign mr_din = din;
