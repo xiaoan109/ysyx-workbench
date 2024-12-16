@@ -1,77 +1,102 @@
 ENTRY(_start)
-/* PHDRS { text PT_LOAD; data PT_LOAD; bss PT_LOAD; } */
 
-MEMORY {
-  mrom  : ORIGIN = 0x20000000, LENGTH = 4K
-  sram  : ORIGIN = 0x0f000000, LENGTH = 8K
-  flash : ORIGIN = 0x30000000, LENGTH = 64M
-  psram : ORIGIN = 0x80000000, LENGTH = 4M
-}
+/* MEMORY {
+  sram  (rwx) : ORIGIN = 0x0f000000, LENGTH = 8K
+  mrom  (r x) : ORIGIN = 0x20000000, LENGTH = 4K
+  flash (rwx) : ORIGIN = 0x30000000, LENGTH = 16M
+  psram (rwx) : ORIGIN = 0x80000000, LENGTH = 4M
+} */
 
 SECTIONS {
-  /* _pmem_start and _entry_offset are defined in LDFLAGS */
-  . = ORIGIN(flash);
+  _sram_start = ORIGIN(sram);
+  _sram_end = _sram_start + LENGTH(sram);
+  _mrom_start = ORIGIN(mrom);
+  _mrom_end = _mrom_start + LENGTH(mrom);
+  _flash_start = ORIGIN(flash);
+  _flash_end = _flash_start + LENGTH(flash);
+  _psram_start = ORIGIN(psram);
+  _psram_end = _psram_start + LENGTH(psram);
 
-  fsbl :{
-    _fsbl = .;
-    *(entry)
-    *(.text._trm_init)
-    *(.text.fsbl)
+  . = _flash_start;
+
+  .bl.f : ALIGN(4) {
+    *(.bl.f*)
+
     . = ALIGN(4);
-    _efsbl = .;
-  } > flash AT >flash
+  } > flash
 
-  ssbl :{
-    _ssbl = .;
-    *(.text.ssbl)
+  .bl.s : ALIGN(4) {
+    _bl_s = .;
+
+    *(.bl.s*)
+
     . = ALIGN(4);
-    _essbl = .;
-  } > sram AT >flash
+    _ebl_s = .;
+  } > sram AT> flash
+  _bl_s_load = LOADADDR(.bl.s);
+  _ebl_s_load = _bl_s_load + SIZEOF(.bl.s);
 
-  _test_origin = LOADADDR(.text);
-  .text :
-  {
+  .text : ALIGN(4) {
     _text = .;
-    *(.text*)
-    . = ALIGN(4);
-    _etext = .;
-  } > psram AT >flash
 
-  .rodata :
-  {
-    _rodata = .;
+    *(.text*)
+
+    . = ALIGN(4);
+    PROVIDE(etext = .);
+    _etext = .;
+  } > psram AT> flash
+  _text_load = LOADADDR(.text);
+  _etext_load = _text_load + SIZEOF(.text);
+
+  .rodata : ALIGN(4) {
     *(.rodata*)
     *(.srodata*)
-    . = ALIGN(4);
-    _erodata = .;
-  } > psram AT >flash
+  } > flash
 
-  .data :
-  {
+  .data : ALIGN(4) {
     _data = .;
+
     *(.data*)
     *(.sdata*)
+    
     . = ALIGN(4);
+    PROVIDE(edata = .);
     _edata = .;
-  } > psram AT >flash
+  } > psram AT> flash
+  _data_load = LOADADDR(.data);
+  _edata_load = _data_load + SIZEOF(.data);
 
-  .bss :
-  {
-    _bstart = .;
+  _data_extra = DEFINED(_data_extra) ? _data_extra : 0;
+  _edata_extra = DEFINED(_edata_extra) ? _edata_extra : 0;
+  _data_extra_load = DEFINED(_data_extra_load) ? _data_extra_load : 0;
+  _edata_extra_load = DEFINED(_edata_extra_load) ? _edata_extra_load : 0;
+
+  .bss (NOLOAD) : ALIGN(4) {
+    _bss_start = .;
+
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-    . = ALIGN(4);
-    _bend = .;
-  } > psram AT >flash
 
-  end = .;
+    . = ALIGN(4);
+    _ebss = .;
+  } > psram
+
+  _bss_extra_start = DEFINED(_bss_extra_start) ? _bss_extra_start : 0;
+  _ebss_extra = DEFINED(_ebss_extra) ? _ebss_extra : 0;
+
+  PROVIDE(end = .);
   _end = .;
 
-  _heap_start = ALIGN(4);
-  _heap_end = _heap_start + 0x40000;
+  . = ALIGN(8);
+  _heap_start = .;
 
-  _stack_top = _sram_start;
-  . = _stack_top + LENGTH(sram) - 0x100;
-  _stack_pointer = .;
+  .stack (NOLOAD) : ALIGN(8) {
+    _stack_top = .;
+
+    . += _stack_size;
+
+    . = ALIGN(8);
+    _stack_pointer = .;
+  } > sram
 }

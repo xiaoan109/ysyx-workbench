@@ -7,7 +7,7 @@
 #define ysyxsoc_ebreak(code) asm volatile("mv a0, %0; ebreak" : :"r"(code))
 
 extern char _heap_start;
-extern char _heap_end;
+extern char _psram_end;
 int main(const char *args);
 
 // extern char _mrom_start;
@@ -23,7 +23,7 @@ extern char _sram_start;
 // #define FLASH_END ((uintptr_t)&_flash_start + FLASH_SIZE)
 
 
-Area heap = RANGE(&_heap_start, &_heap_end);
+Area heap = RANGE(&_heap_start, &_psram_end);
 #ifndef MAINARGS
 #define MAINARGS ""
 #endif
@@ -118,36 +118,10 @@ void halt(int code) {
   while (1);
 }
 
-void ssbl();
-void fsbl() {
-  extern char _efsbl, _ssbl, _essbl;
-  volatile uint32_t *src = (volatile uint32_t *)&_efsbl;
-  volatile uint32_t *dst = (volatile uint32_t *)&_ssbl;
-  while((uint32_t) dst < (uint32_t) &_essbl){
-    *dst++ = *src++;
-  }
-  ssbl();
-}
-
-void ssbl() {
-  // copy text rodata data 
-  extern char _test_origin, _text, _edata, _bstart, _bend;
-  volatile uint32_t *src = (volatile uint32_t *)&_test_origin;
-  volatile uint32_t *dst = (volatile uint32_t *)&_text;
-  while((uint32_t) dst < (uint32_t) &_edata){
-    *dst++ = *src++;
-  }
-  // init_bss
-  src = (volatile uint32_t *)&_bstart;
-  while((uint32_t) src < (uint32_t) &_bend){
-    *src++ = 0;
-  }
+void _trm_init() {
   init_uart(115200);
   brandShow();
   int ret = main(mainargs);
   halt(ret);
 }
 
-void _trm_init() {
-  fsbl();
-}
