@@ -1,0 +1,13 @@
+*.*
+*
+!*/
+!.gitignore
+!Makefile
+!makefile
+!LICENSE
+!README.md
+!README.en.md
+!board/*
+!*.v
+!*.cpp
+build/

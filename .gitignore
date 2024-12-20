@@ -14,4 +14,5 @@
 /am-kernels
 !/yosys-sta/**
 !/ysyxSoC/**
-/nvboard
+!/nvboard/**
+!/rt-thread-am/**
