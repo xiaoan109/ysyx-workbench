@@ -28,6 +28,7 @@ UART::UART(SDL_Renderer *rend, int cnt, int init_val, int ct, int x, int y, int 
 
   rx_sending_str = "";
   pin_poke(UART_RX, 1);
+  set_divisor(50000000/(16 * 115200) * 16);
 }
 
 UART::~UART() {

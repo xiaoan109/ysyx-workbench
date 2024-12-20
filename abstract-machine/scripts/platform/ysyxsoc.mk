@@ -5,6 +5,8 @@ AM_SRCS := riscv/ysyxsoc/start.S \
            riscv/ysyxsoc/input.c \
            riscv/ysyxsoc/cte.c \
            riscv/ysyxsoc/trap.S \
+           riscv/ysyxsoc/serial.c \
+           riscv/ysyxsoc/gpu.c \
            platform/dummy/vme.c \
            platform/dummy/mpe.c
 
@@ -14,7 +16,7 @@ LDFLAGS   += -T $(AM_HOME)/scripts/linker_ysyxsoc.ld
 LDFLAGS   += --defsym=_stack_size=1K
 LDFLAGS   += --gc-sections -e _start
 # LDFLAGS   += --print-map
-LDFLAGS   += -Map out.map
+# LDFLAGS   += -Map out.map
 CFLAGS += -DMAINARGS=\"$(mainargs)\"
 CFLAGS += -I$(AM_HOME)/am/src/riscv/ysyxsoc/include
 .PHONY: $(AM_HOME)/am/src/riscv/ysyxsoc/trm.c
@@ -25,4 +27,9 @@ image: $(IMAGE).elf
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(IMAGE).elf $(IMAGE).bin
 
 run: image
+ifeq ($(BOARD), )
 	$(MAKE) -C $(NPC_HOME) run IMAGE=$(IMAGE).bin
+else
+	@echo Runing ysyxSoC on NVBOARD
+	$(MAKE) -C $(NPC_HOME) -f Makefile.nvboard run IMAGE=$(IMAGE).bin
+endif
