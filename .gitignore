@@ -11,7 +11,7 @@
 !README.md
 !.gitignore
 !init.sh
-/nvboard
 /am-kernels
 !/yosys-sta/**
 !/ysyxSoC/**
+/nvboard

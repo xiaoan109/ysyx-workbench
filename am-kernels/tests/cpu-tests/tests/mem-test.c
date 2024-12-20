@@ -1,13 +1,5 @@
 #include "trap.h"
 
-extern char _heap_start;
-extern char _heap_end;
-extern char _psram_start;
-#define PSRAM_SIZE (4 * 1024 * 1024)
-#define PSRAM_END ((uintptr_t)&_psram_start + PSRAM_SIZE)
-#define HEAP_START (uintptr_t)&_heap_start
-/* 256B stack */  
-#define HEAP_END (uintptr_t)&_heap_end
 
 void mem_write_test(uint8_t *start, uint8_t *end, int access_width) {
   uint8_t *addr = start;
@@ -60,32 +52,50 @@ void mem_read_verify(uint8_t *start, uint8_t *end, int access_width) {
 int main() {
   // printf("Starting memory test...\n");
 
-  // uint8_t *heap_start = (uint8_t *)HEAP_START;
-  // uint8_t *heap_end = (uint8_t *)HEAP_END;
   // uint8_t *psram_start = (uint8_t *)&_psram_start;
-  // uint8_t *psram_end = (uint8_t *)PSRAM_END;
+  // uint8_t *psram_end = (uint8_t *)&_psram_end;
+  // extern char _sdram_start, _sdram_end;  
+  // uint8_t *sdram_start = (uint8_t *)&_sdram_start;
+  // uint8_t *test_end = (uint8_t *)((uintptr_t)&_sdram_start + 4 * 1024);
+  // uint8_t *test_start = (uint8_t *)((uintptr_t)&_sdram_end - 4 * 1024);
+  // uint8_t *sdram_end = (uint8_t *)&_sdram_end;
 
   // printf("Testing memory range: %p - %p\n", heap_start, heap_end);
 
   // 测试 8 位访问
   // printf("Testing 8-bit access...\n");
-  // mem_write_test(heap_start, psram_end, 8);
-  // mem_read_verify(heap_start, psram_end, 8);
+  // mem_write_test(sdram_start, test_end, 8);
+  // mem_read_verify(sdram_start, test_end, 8);
+
+  // mem_write_test(test_start, sdram_end, 8);
+  // mem_read_verify(test_start, sdram_end, 8);
 
   // 测试 16 位访问
   // printf("Testing 16-bit access...\n");
-  // mem_write_test(heap_start, psram_end, 16);
-  // mem_read_verify(heap_start, psram_end, 16);
+ 
+  // mem_write_test(sdram_start, test_end, 16);
+  // mem_read_verify(sdram_start, test_end, 16);
+
+  // mem_write_test(test_start, sdram_end, 16);
+  // mem_read_verify(test_start, sdram_end, 16);
 
   // 测试 32 位访问
   // printf("Testing 32-bit access...\n");
-  // mem_write_test(heap_start, psram_end, 32);
-  // mem_read_verify(heap_start, psram_end, 32);
+  // mem_write_test(sdram_start, test_end, 32);
+  // mem_read_verify(sdram_start, test_end, 32);
+
+  // mem_write_test(test_start, sdram_end, 32);
+  // mem_read_verify(test_start, sdram_end, 32);
 
   // 测试 64 位访问
   // printf("Testing 64-bit access...\n");
   // mem_write_test(heap_start, psram_end, 64);
   // mem_read_verify(heap_start, psram_end, 64);
+  // mem_write_test(sdram_start, test_end, 64);
+  // mem_read_verify(sdram_start, test_end, 64);
+
+  // mem_write_test(test_start, sdram_end, 64);
+  // mem_read_verify(test_start, sdram_end, 64);
 
   // printf("Memory test completed.\n");
   return 0;

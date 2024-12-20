@@ -28,8 +28,8 @@ reg[23:0] addr;
 reg[31:0] data;
 reg[31:0] rdata;
 reg[7:0] counter;
-reg [3:0] state;
-typedef enum [3:0] { cmd_t, addr_t, data_t, delay_t, err_t } state_t;
+reg [2:0] state;
+typedef enum [2:0] { cmd_t, addr_t, data_t, delay_t, err_t } state_t;
 
 always @(posedge ce_n) begin
   if(cmd == `QPICMD)begin
