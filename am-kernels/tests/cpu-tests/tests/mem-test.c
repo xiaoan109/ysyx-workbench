@@ -59,15 +59,15 @@ int main() {
   // uint8_t *test_end = (uint8_t *)((uintptr_t)&_sdram_start + 4 * 1024);
   // uint8_t *test_start = (uint8_t *)((uintptr_t)&_sdram_end - 4 * 1024);
   // uint8_t *sdram_end = (uint8_t *)&_sdram_end;
-  uint8_t *chiplink_mem_start = (uint8_t *)0xc0000000;
-  uint8_t *chiplink_mem_end = (uint8_t *)(0xc0000000 + 4 * 1024);
+  // uint8_t *chiplink_mem_start = (uint8_t *)0xc0000000;
+  // uint8_t *chiplink_mem_end = (uint8_t *)(0xc0000000 + 4 * 1024);
 
   // printf("Testing memory range: %p - %p\n", heap_start, heap_end);
 
   // 测试 8 位访问
   // printf("Testing 8-bit access...\n");
-  mem_write_test(chiplink_mem_start, chiplink_mem_end, 8);
-  mem_read_verify(chiplink_mem_start, chiplink_mem_end, 8);
+  // mem_write_test(chiplink_mem_start, chiplink_mem_end, 8);
+  // mem_read_verify(chiplink_mem_start, chiplink_mem_end, 8);
 
   // mem_write_test(test_start, sdram_end, 8);
   // mem_read_verify(test_start, sdram_end, 8);

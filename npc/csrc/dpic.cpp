@@ -37,7 +37,11 @@ extern "C" void pmem_write(uint32_t waddr, uint32_t wdata, const svBitVecVal* wm
   if(wen) {
     switch (*wmask) {
       case 1:   _pmem_write(waddr, wdata, 1); break; // 0001, 1byte.
+      case 2:   _pmem_write(waddr + 1, wdata>>8, 1); break;  // 0010, 1byte
+      case 4:   _pmem_write(waddr + 2, wdata>>16, 1); break;  // 0100, 1byte
+      case 8:   _pmem_write(waddr + 3, wdata>>24, 1); break;  // 1000, 1byte
       case 3:   _pmem_write(waddr, wdata, 2); break; // 0011, 2byte.
+      case 12:  _pmem_write(waddr + 2, wdata>>16, 2); break; // 1100, 2byte.
       case 15:  _pmem_write(waddr, wdata, 4); break; // 1111, 4byte.
       default:  break;
     }
@@ -127,6 +131,58 @@ extern "C" void psram_write(int32_t addr, int32_t data, int32_t mask) {
     _pmem_write(addr, wdata, mask/2);
     // printf("psram_write addr: 0x%08x data: 0x%08x\n", addr, data);
   }
+}
+
+
+// performance counter
+extern uint64_t ifu_pfc_r;
+extern uint64_t lsu_pfc_r;
+extern uint64_t lsu_pfc_w;
+extern uint64_t exu_pfc;
+extern uint64_t idu_cal_type;
+extern uint64_t idu_mem_type;
+extern uint64_t idu_jump_type;
+extern uint64_t idu_csr_type;
+extern uint8_t current_inst_type;
+extern VerilatedContext* contextp;
+extern uint64_t timestap_begin;
+static uint64_t lsu_begin_time = 0;
+extern double lsu_read_delay;
+extern double lsu_write_delay;
+
+uint64_t get_sim_time();
+
+extern "C" void axi4_handshake(svBit valid, svBit ready, svBit last, int pfc_type) {
+  if(valid && ready && last) {
+    switch(pfc_type) {
+      case 1: ifu_pfc_r++; break;
+      case 2: case 5: lsu_begin_time = get_sim_time(); break;
+      case 4: lsu_pfc_w++; lsu_write_delay += (get_sim_time() - lsu_begin_time) / 2.0; break;
+      case 6: lsu_pfc_r++; lsu_read_delay += (get_sim_time()- lsu_begin_time) / 2.0; break;
+      default: break;
+    }
+  }
+}
+
+extern "C" void exu_finish(svBit valid) {
+  if(valid) {
+    exu_pfc++;
+  }
+}
+
+extern "C" void idu_instr_type(svBit valid, int opcode) {
+  if(valid) {
+    switch(opcode) {
+      case 0x33: case 0x13: case 0x37: case 0x17: idu_cal_type++; current_inst_type = 0; break; //include U-type
+      case 0x23: case 0x3: idu_mem_type++; current_inst_type = 1; break;
+      case 0x63: case 0x67: case 0x6f: idu_jump_type++; current_inst_type = 2; break;
+      case 0x73: idu_csr_type++; current_inst_type = 3; break; //include ebreak
+    }
+  }
+}
+
+extern "C" void inst_start(svBit start) {
+  if(start && rst_n_sync) timestap_begin = get_sim_time(); 
 }
 
 

@@ -134,7 +134,7 @@ module lsu (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (wen),
-    .i_din  ({i_addr, awid + 1'b1, BURST_LEN - 1'b1, awsize_int, BURST_TYPE, wdata_int}),
+    .i_din  ({i_addr, 4'b0, BURST_LEN - 1'b1, awsize_int, BURST_TYPE, wdata_int}),
     .o_dout ({awaddr, awid, awlen, awsize, awburst, wdata})
   );
 
@@ -241,7 +241,7 @@ module lsu (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (ren),
-    .i_din  ({i_addr, arid + 1'b1, BURST_LEN - 1'b1, arsize_int, BURST_TYPE}),
+    .i_din  ({i_addr, 4'b0, BURST_LEN - 1'b1, arsize_int, BURST_TYPE}),
     .o_dout ({araddr, arid, arlen, arsize, arburst})
   );
 

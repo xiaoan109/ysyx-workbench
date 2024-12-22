@@ -259,3 +259,9 @@ config RT_CHECK
   default y
 
 endmenu
+
+menu "Difftest for npc or ysyxSoC"
+config YSYXSOC
+  bool "Difftest for ysyxSoC"
+  default y
+endmenu

@@ -27,6 +27,9 @@ run: all
 	@cat $(RESULT)
 	@rm $(RESULT)
 
+wave:
+	make -C $(NPC_HOME) wave
+
 gdb: all
 
 clean:

@@ -213,6 +213,7 @@ module axi_interconnect #(
 
   integer i, j;
 
+`ifndef SYNTHESIS
   // check configuration
   initial begin
     if (M_REGIONS < 1 || M_REGIONS > 16) begin
@@ -275,6 +276,8 @@ module axi_interconnect #(
       end
     end
   end
+
+`endif
 
   localparam [2:0]
     STATE_IDLE = 3'd0,

@@ -44,7 +44,7 @@ module ifu (
 );
 
   localparam [7:0] BURST_LEN = 8'b1;
-  localparam [2:0] BURST_SIZE = 3'($clog2(`CPU_WIDTH / 8));
+  localparam [2:0] BURST_SIZE = $clog2(`CPU_WIDTH / 8);
   localparam [1:0] BURST_TYPE = 2'b01;  //INCR
 
   wire                  ren;
@@ -119,7 +119,7 @@ module ifu (
     .i_clk  (i_clk),
     .i_rst_n(i_rst_n),
     .i_wen  (ren),
-    .i_din  ({i_pc, arid + 1'b1, BURST_LEN - 1'b1, BURST_SIZE, BURST_TYPE}),
+    .i_din  ({i_pc, 4'b0, BURST_LEN - 1'b1, BURST_SIZE, BURST_TYPE}),
     .o_dout ({araddr, arid, arlen, arsize, arburst})
   );
 

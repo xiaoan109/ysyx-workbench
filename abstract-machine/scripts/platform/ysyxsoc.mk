@@ -19,6 +19,9 @@ LDFLAGS   += --gc-sections -e _start
 # LDFLAGS   += -Map out.map
 CFLAGS += -DMAINARGS=\"$(mainargs)\"
 CFLAGS += -I$(AM_HOME)/am/src/riscv/ysyxsoc/include
+ifneq ($(DIFFTEST),)
+CFLAGS += -DDIFFTEST_ON
+endif
 .PHONY: $(AM_HOME)/am/src/riscv/ysyxsoc/trm.c
 
 image: $(IMAGE).elf
@@ -27,9 +30,5 @@ image: $(IMAGE).elf
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(IMAGE).elf $(IMAGE).bin
 
 run: image
-ifeq ($(BOARD), )
+	$(MAKE) -C $(NPC_HOME) clean
 	$(MAKE) -C $(NPC_HOME) run IMAGE=$(IMAGE).bin
-else
-	@echo Runing ysyxSoC on NVBOARD
-	$(MAKE) -C $(NPC_HOME) -f Makefile.nvboard run IMAGE=$(IMAGE).bin
-endif

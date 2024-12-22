@@ -46,6 +46,7 @@ module axi_access_fault (
 
   assign access_fault = access_fault_reg;
 
+`ifndef SYNTHESIS
   always @(*) begin
     access_fault_next = 1'b0;
     if (bready && bvalid && bresp != 2'b0) begin
@@ -57,6 +58,7 @@ module axi_access_fault (
       $fatal(0, "AXI Access Fault RRESP=%b, ARADDR=%h", rresp, araddr);
     end
   end
+`endif
 
   // stdreg #(
   //   .WIDTH    (1),

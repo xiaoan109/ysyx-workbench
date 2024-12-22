@@ -5,6 +5,7 @@ uint8_t mrom[MROM_MSIZE] = {};
 uint8_t flash[FLASH_MSIZE] = {};
 uint8_t psram[PSRAM_MSIZE] = {};
 
+#ifdef YSYXSOC
 uint8_t* guest_to_host(uint32_t paddr) { 
   if(paddr >= MROM_START && paddr <= MROM_END) {
     return mrom + paddr - MROM_START;
@@ -17,7 +18,10 @@ uint8_t* guest_to_host(uint32_t paddr) {
     assert(0);
     // return pmem + paddr - PMEM_START; 
   }
-  }
+}
+#else
+uint8_t* guest_to_host(uint32_t paddr) { return pmem + paddr - PMEM_START; }
+#endif
 
 // uint32_t host_to_guest(uint8_t *haddr) { return haddr - pmem + PMEM_START; }
 

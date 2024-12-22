@@ -56,7 +56,9 @@ module axi_lite_clint (
     arready_next = 1'b0;
     rvalid_next = rvalid_reg && !rready;
     if (arvalid && !arready && (!rvalid || rready)) begin
+`ifndef SYNTHESIS
       difftest_skip();
+`endif
       reg_ren = 1'b1;
       arready_next = 1'b1;
       rvalid_next = 1'b1;

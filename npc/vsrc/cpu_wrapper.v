@@ -64,8 +64,8 @@ module cpu_wrapper (
 );
 
   top u_top (
-    .i_clk            (clock),
-    .i_rst_n          (!reset),
+    .clock            (clock),
+    .reset            (reset),
     .io_master_awready(io_master_awready),
     .io_master_awvalid(io_master_awvalid),
     .io_master_awaddr (io_master_awaddr),

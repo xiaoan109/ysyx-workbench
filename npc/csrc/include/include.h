@@ -1,23 +1,32 @@
 #ifndef _INCLUDE_H_
 #define _INCLUDE_H_
 
+#ifdef YSYXSOC
 #include <VysyxSoCFull.h>
+#else
+#include <Vtop.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <macro.h>
 
-// #define INST_START 0x80000000
+#ifdef YSYXSOC
+#define INST_START 0x30000000
+#else
+#define INST_START 0x80000000
+#endif
+
 #define PMEM_START 0x80000000
 #define PMEM_END   0x87ffffff
 #define PMEM_MSIZE (PMEM_END+1-PMEM_START)
 
-// #define INST_START 0x20000000
 #define MROM_START 0x20000000
 #define MROM_END   0x20000fff
 #define MROM_MSIZE (MROM_END+1-MROM_START)
 
-#define INST_START  0x30000000
+
 #define FLASH_START 0x30000000
 #define FLASH_END   0x3fffffff
 #define FLASH_MSIZE (FLASH_END+1-FLASH_START)
@@ -26,9 +35,6 @@
 #define PSRAM_END   0x9fffffff
 #define PSRAM_MSIZE (PSRAM_END+1-PSRAM_START)
 
-#ifndef DEBUG_TIME 
-#define DEBUG_TIME -1
-#endif
 
 // #define DIFFTEST_ON  1
 
