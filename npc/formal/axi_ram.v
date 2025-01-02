@@ -24,10 +24,12 @@ THE SOFTWARE.
 
 // Language: Verilog 2001
 
+`resetall `timescale 1ns / 1ps `default_nettype none
+
 /*
  * AXI4 RAM
  */
-module axi_sram #(
+module axi_ram #(
   // Width of data bus in bits
   parameter DATA_WIDTH = 32,
   // Width of address bus in bits
@@ -133,8 +135,7 @@ module axi_sram #(
   reg s_axi_rvalid_pipe_reg = 1'b0;
 
   // (* RAM_STYLE="BLOCK" *)
-  // reg [DATA_WIDTH-1:0] mem[(2**VALID_ADDR_WIDTH)-1:0];
-  // reg [DATA_WIDTH-1:0] mem[(2**8)-1:0];
+  reg [DATA_WIDTH-1:0] mem[(2**VALID_ADDR_WIDTH)-1:0];
 
   wire [VALID_ADDR_WIDTH-1:0] s_axi_awaddr_valid = s_axi_awaddr >> (ADDR_WIDTH - VALID_ADDR_WIDTH);
   wire [VALID_ADDR_WIDTH-1:0] s_axi_araddr_valid = s_axi_araddr >> (ADDR_WIDTH - VALID_ADDR_WIDTH);
@@ -153,21 +154,17 @@ module axi_sram #(
   assign s_axi_rlast = PIPELINE_OUTPUT ? s_axi_rlast_pipe_reg : s_axi_rlast_reg;
   assign s_axi_rvalid = PIPELINE_OUTPUT ? s_axi_rvalid_pipe_reg : s_axi_rvalid_reg;
 
-  // integer i;
+  integer i, j;
 
-  //   initial begin
-  //     // two nested loops for smaller number of iterations per loop
-  //     // workaround for synthesizer complaints about large loop counts
-  //     for (i = 0; i < 2 ** VALID_ADDR_WIDTH; i = i + 2 ** (VALID_ADDR_WIDTH / 2)) begin
-  //       for (j = i; j < i + 2 ** (VALID_ADDR_WIDTH / 2); j = j + 1) begin
-  //         mem[j] = 0;
-  //       end
-  //     end
-  //   end
-
-  // initial begin
-  //   $readmemh(`MEM_INIT_FILE, mem);
-  // end
+  initial begin
+    // two nested loops for smaller number of iterations per loop
+    // workaround for synthesizer complaints about large loop counts
+    for (i = 0; i < 2 ** VALID_ADDR_WIDTH; i = i + 2 ** (VALID_ADDR_WIDTH / 2)) begin
+      for (j = i; j < i + 2 ** (VALID_ADDR_WIDTH / 2); j = j + 1) begin
+        mem[j] = j;
+      end
+    end
+  end
 
   always @* begin
     write_state_next = WRITE_STATE_IDLE;
@@ -239,7 +236,6 @@ module axi_sram #(
           write_state_next = WRITE_STATE_RESP;
         end
       end
-      default: ;
     endcase
   end
 
@@ -257,11 +253,11 @@ module axi_sram #(
     s_axi_bid_reg <= s_axi_bid_next;
     s_axi_bvalid_reg <= s_axi_bvalid_next;
 
-    // for (i = 0; i < WORD_WIDTH; i = i + 1) begin
-    //   if (mem_wr_en & s_axi_wstrb[i]) begin
-    //     mem[write_addr_valid][WORD_SIZE*i+:WORD_SIZE] <= s_axi_wdata[WORD_SIZE*i+:WORD_SIZE];
-    //   end
-    // end
+    for (i = 0; i < WORD_WIDTH; i = i + 1) begin
+      if (mem_wr_en & s_axi_wstrb[i]) begin
+        mem[write_addr_valid][WORD_SIZE*i+:WORD_SIZE] <= s_axi_wdata[WORD_SIZE*i+:WORD_SIZE];
+      end
+    end
 
     if (rst) begin
       write_state_reg   <= WRITE_STATE_IDLE;
@@ -343,9 +339,9 @@ module axi_sram #(
     s_axi_rlast_reg <= s_axi_rlast_next;
     s_axi_rvalid_reg <= s_axi_rvalid_next;
 
-    // if (mem_rd_en) begin
-    //   s_axi_rdata_reg <= mem[read_addr_valid];
-    // end
+    if (mem_rd_en) begin
+      s_axi_rdata_reg <= mem[read_addr_valid];
+    end
 
     if (!s_axi_rvalid_pipe_reg || s_axi_rready) begin
       s_axi_rid_pipe_reg <= s_axi_rid_reg;
@@ -363,35 +359,6 @@ module axi_sram #(
     end
   end
 
-`ifndef SYNTHESIS
-  import "DPI-C" function void pmem_write(
-    input int       waddr,
-    input int       wdata,
-    input bit [3:0] wmask,
-    input bit       wen
-  );
-  always @(*) begin
-    pmem_write(write_addr_reg, s_axi_wdata, s_axi_wstrb, mem_wr_en);
-  end
-  import "DPI-C" function void pmem_read(
-    input  int raddr,
-    output int rdata,
-    input  bit ren
-  );
-  always @(*) begin
-    pmem_read(read_addr_reg, s_axi_rdata_next, mem_rd_en);
-  end
-
-  stdreg #(
-    .WIDTH    (DATA_WIDTH),
-    .RESET_VAL({DATA_WIDTH{1'b0}})
-  ) u_R_reg (
-    .i_clk  (clk),
-    .i_rst_n(!rst),
-    .i_wen  (mem_rd_en),
-    .i_din  (s_axi_rdata_next),
-    .o_dout (s_axi_rdata_reg)
-  );
-`endif
-
 endmodule
+
+`resetall

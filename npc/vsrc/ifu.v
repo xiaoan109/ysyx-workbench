@@ -140,10 +140,10 @@ module ifu (
   //   end
   // endgenerate
 
-  assign rdata_rev    = rdata;
+  assign rdata_rev = rdata;
   // assign o_instr   = rdata_rev;
   stdreg #(
-    .WIDTH    (`CPU_WIDTH ),
+    .WIDTH    (`CPU_WIDTH),
     .RESET_VAL(`CPU_WIDTH'b0)
   ) u_instr_reg (
     .i_clk  (i_clk),

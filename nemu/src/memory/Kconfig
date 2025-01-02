@@ -31,4 +31,8 @@ config MEM_RANDOM
   help
     This may help to find undefined behaviors.
 
+config YSYXSOC
+  bool "Difftest for ysyxSoC"
+  default y
+
 endmenu #MEMORY

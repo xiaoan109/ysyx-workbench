@@ -1,4 +1,4 @@
-ARCH = 
+ARCH = riscv32e-npc
 ifeq ($(ARCH), riscv32e-npc)
 TOPNAME = top
 else
@@ -47,12 +47,12 @@ IMAGE ?= $(HOME)/ysyx-workbench/am-kernels/tests/cpu-tests/build/dummy-$(ARCH).b
 MEM_INIT_FILE = /tmp/mem.hex
 NPC_ARGS := --img $(IMAGE)
 
-ifneq ($(DIFFTEST),)
+ifneq ($(DIFFTEST), )
 CXXFLAGS += -DDIFFTEST_ON
 NPC_ARGS += --diff $(NEMU_HOME)/build/riscv32-nemu-interpreter-so
 endif
 
-ifneq ($(WAVE),)  #wave trace
+ifneq ($(WAVE), )  #wave trace
 CXXFLAGS += -DTRACE_ON
 endif
 
@@ -87,7 +87,7 @@ CSRCS += $(SRC_AUTO_BIND)
 endif
 
 # project source
-VSRCS = $(shell find ./vsrc -name "*.v" -o -name "*.sv")
+VSRCS = $(shell find ./vsrc -path $(NPC_HOME)/vsrc/deprecated -path $(NPC_HOME)/include -prune -o -name "*.v" -o -name "*.sv")
 ifeq ($(ARCH), riscv32e-ysyxsoc)
 VSRCS += $(shell find $(SOC_HOME)/perip -name "*.v")
 VSRCS += $(SOC_HOME)/build/ysyxSoCFull.v

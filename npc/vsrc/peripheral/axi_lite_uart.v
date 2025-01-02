@@ -69,7 +69,9 @@ module axi_lite_uart (
     wready_next = 1'b0;
     bvalid_next = bvalid_reg && !bready;
     if (awvalid && wvalid && (!awready && !wready) && (!bvalid || bready)) begin
+`ifndef SYNTHESIS
       difftest_skip();
+`endif
       reg_wen = 1'b1;
       awready_next = 1'b1;
       wready_next = 1'b1;
@@ -94,7 +96,9 @@ module axi_lite_uart (
     arready_next = 1'b0;
     rvalid_next = rvalid_reg && !rready;
     if (arvalid && !arready && (!rvalid || rready)) begin
+`ifndef SYNTHESIS
       difftest_skip();
+`endif
       reg_ren = 1'b1;
       arready_next = 1'b1;
       rvalid_next = 1'b1;
