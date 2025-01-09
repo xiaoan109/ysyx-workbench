@@ -149,6 +149,9 @@ extern uint64_t timestap_begin;
 static uint64_t lsu_begin_time = 0;
 extern double lsu_read_delay;
 extern double lsu_write_delay;
+extern double cache_hit_rate;
+extern double cache_acc_time;
+extern double cache_miss_penalty;
 
 uint64_t get_sim_time();
 
@@ -183,6 +186,14 @@ extern "C" void idu_instr_type(svBit valid, int opcode) {
 
 extern "C" void inst_start(svBit start) {
   if(start && rst_n_sync) timestap_begin = get_sim_time(); 
+}
+
+extern "C" void cache_AMAT(int hit_rate, int acc_tot, int access_time, int miss_penalty) {
+  if(acc_tot) {
+    cache_hit_rate = hit_rate * 1.0 / acc_tot;
+    cache_acc_time = (access_time - miss_penalty) * 1.0 / acc_tot;
+    cache_miss_penalty = miss_penalty * 1.0 / (acc_tot - hit_rate);
+  }
 }
 
 

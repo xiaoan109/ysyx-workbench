@@ -1,8 +1,9 @@
 `include "defines.vh"
 module top (
   input                   clock,
-  input                   reset,
-`ifdef YSYXSOC
+  input                   reset
+  `ifdef YSYXSOC
+  ,
   input                   io_master_awready,
   output                  io_master_awvalid,
   output [`CPU_WIDTH-1:0] io_master_awaddr,
@@ -757,7 +758,7 @@ module top (
   } rule_t;
   //memory map 0->flash & sdram, 1->sram
   localparam rule_t [NoRules-1:0] addr_map = '{
-    '{idx: 32'd0, start_addr: 32'h30000000, end_addr: 32'h40000000},
+    '{idx: 32'd1, start_addr: 32'h30000000, end_addr: 32'h40000000},
     '{idx: 32'd0, start_addr: 32'ha0000000, end_addr: 32'hc0000000},
     '{idx: 32'd1, start_addr: 32'h0f000000, end_addr: 32'h10000000}
   };

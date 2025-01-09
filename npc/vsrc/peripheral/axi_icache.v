@@ -74,7 +74,7 @@ module axi_icache (
   input  [             3:0] icache_rid
 );
 
-  localparam CACHELINE_SIZE = 4;  //byte(s), m = 2, SoC只能4B，因为AXI42APB不支持burst（或者分多次AXI Transacation），后面再修改
+  localparam CACHELINE_SIZE = 8;  //byte(s), m = 3
   localparam CACHELINE_NUM = 16;  //n = 4
   localparam CACHELINE_SIZE_WIDTH = $clog2(CACHELINE_SIZE);
   localparam CACHELINE_NUM_WIDTH = $clog2(CACHELINE_NUM);
@@ -209,7 +209,7 @@ module axi_icache (
     data_wr_en = 1'b0;
     valid_wr_en = 1'b0;
     tag_wr_en = 1'b0;
-    icache_wr_offset_next = 0;
+    icache_wr_offset_next = icache_wr_offset_reg;
 
     ifu_rid_next = ifu_rid_reg;
     ifu_rlast_next = ifu_rlast_reg;
@@ -419,5 +419,73 @@ module axi_icache (
     .i_din  (icache_wr_offset_next),
     .o_dout (icache_wr_offset_reg)
   );
+
+`ifndef SYNTHESIS
+  import "DPI-C" function void cache_AMAT(
+    input int hit_rate,
+    input int acc_tot,
+    input int access_time,
+    input int miss_penalty
+  );
+  reg [31:0] cache_hit_rate;  //times
+  reg [31:0] cache_acc_tot;  //times
+  reg [31:0] access_time;
+  reg cache_acc_en;
+  reg [31:0] miss_penalty;
+  reg dram_acc_en;
+  always @(posedge i_clk) begin
+    if (!i_rst_n) begin
+      cache_acc_en <= 1'b0;
+    end else if (ifu_arvalid) begin
+      cache_acc_en <= 1'b1;
+    end else if (ifu_rvalid_reg && ifu_rready && ifu_rlast) begin
+      cache_acc_en <= 1'b0;
+    end
+  end
+  always @(posedge i_clk) begin
+    if (!i_rst_n) begin
+      access_time <= 32'b0;
+    end else if (cache_acc_en) begin
+      access_time <= access_time + 1'b1;
+    end
+  end
+  always @(posedge i_clk) begin
+    if (!i_rst_n) begin
+      dram_acc_en <= 1'b0;
+    end else if (state_reg == check_cache_t) begin
+      if (!(icache_valid && ifu_cache_tag == icache_tag)) begin
+        dram_acc_en <= 1'b1;
+      end
+    end else if (state_reg == update_array_t) begin
+      dram_acc_en <= 1'b0;
+    end
+  end
+  always @(posedge i_clk) begin
+    if (!i_rst_n) begin
+      miss_penalty <= 32'b0;
+    end else if (dram_acc_en) begin
+      miss_penalty <= miss_penalty + 1'b1;
+    end
+  end
+  always @(posedge i_clk) begin
+    if (!i_rst_n) begin
+      cache_hit_rate <= 32'b0;
+    end else if (state_reg == check_cache_t) begin
+      if (icache_valid && ifu_cache_tag == icache_tag) begin
+        cache_hit_rate <= cache_hit_rate + 1'b1;
+      end
+    end
+  end
+  always @(posedge i_clk) begin
+    if (!i_rst_n) begin
+      cache_acc_tot <= 32'b0;
+    end else if (ifu_arvalid && ifu_arready_reg) begin
+      cache_acc_tot <= cache_acc_tot + 1'b1;
+    end
+  end
+  always @(*) begin
+    cache_AMAT(cache_hit_rate, cache_acc_tot, access_time, miss_penalty);
+  end
+`endif
 
 endmodule

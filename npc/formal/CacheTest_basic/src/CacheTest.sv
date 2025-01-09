@@ -39,7 +39,8 @@ module CacheTest (
   output                    ifu_axi_rlast,
   output [             3:0] ifu_axi_rid,
   //random delay in axi transaction
-  input                     block
+  input                     ar_block,
+  input                     r_block
 );
 
   // localparam MEMSIZE = 128;  //byte
@@ -215,8 +216,11 @@ module CacheTest (
   reg init = 0;
   always @(posedge clock) begin
     assume (reset == !init);
+    assume (ifu_axi_arlen == 8'b0);
+    assume (ifu_axi_arsize == 3'b10);
+    assume (ifu_axi_arburst == 2'b01);
     if (init) begin
-      if (icache_axi_rvalid && icache_axi_rready && icache_axi_rlast && icache_axi_arlen == 8'b0) begin
+      if (icache_axi_rvalid && icache_axi_rready && icache_axi_rlast) begin
         r_assert : assert (icache_axi_rdata == mem[icache_axi_araddr>>2]);
       end
     end

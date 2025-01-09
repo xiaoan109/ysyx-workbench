@@ -31,6 +31,9 @@ double inst_time[4] = {0};
 uint64_t timestap_begin = 0;
 double lsu_read_delay = 0;
 double lsu_write_delay = 0;
+double cache_hit_rate = 0;
+double cache_acc_time = 0;
+double cache_miss_penalty = 0;
 
 void step_and_dump_wave()
 {
@@ -67,6 +70,11 @@ void statistics() {
   printf("IDU Csr pfc: %ld, %f%%, CPI: %f\n", idu_csr_type, idu_csr_type * 100.0 / total_inst, inst_time[3] / idu_csr_type);
   printf("LSU Read Delay pfc: %f\n", lsu_read_delay / lsu_pfc_r);
   printf("LSU Write Delay pfc: %f\n", lsu_write_delay / lsu_pfc_w);
+  printf("ICACHE Hit Rate pfc: %f\n", cache_hit_rate);
+  printf("ICACHE Avg Access Time pfc: %f cycle(s)\n", cache_acc_time);
+  printf("ICACHE Avg Miss Penalty pfc: %f cycle(s)\n", cache_miss_penalty);
+  printf("ICACHE AMAT: %f\n", cache_acc_time + (1 - cache_hit_rate) * cache_miss_penalty);
+  printf("ICACHE TMT: %f\n", (1 - cache_hit_rate) * cache_miss_penalty);
 };
 
 int main(int argc, char **argv) {

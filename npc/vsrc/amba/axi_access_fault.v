@@ -1,5 +1,6 @@
 // AXI BUS Access Fault Monitor
 // Currently Simulation Only
+`include "defines.vh"
 module axi_access_fault (
   input                     i_clk,
   input                     i_rst_n,
