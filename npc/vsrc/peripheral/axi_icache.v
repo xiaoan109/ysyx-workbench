@@ -2,6 +2,8 @@
 module axi_icache (
   input                     i_clk,
   input                     i_rst_n,
+  //fence.i
+  input                     fence_i,
   //IFU intf
   //AW Channel
   output                    ifu_awready,
@@ -337,6 +339,9 @@ module axi_icache (
     end
     if (tag_wr_en) begin
       tag_array[ifu_cache_index] <= ifu_cache_tag;
+    end
+    if (fence_i) begin
+      data_valid <= {CACHELINE_NUM{1'b0}};
     end
   end
 

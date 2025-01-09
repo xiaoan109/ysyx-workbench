@@ -23,6 +23,8 @@ module idu (
   output                      o_csrdwen,
   output                      o_ecall,
   output                      o_mret,
+  //fence.i
+  output                      o_fence_i,
   //handshake
   input                       i_pre_valid,
   output                      o_pre_ready,
@@ -30,10 +32,10 @@ module idu (
   input                       i_post_ready
 );
 
-  // wire [2:0] func3;
+  wire [2:0] func3;
   wire [6:0] opcode;
 
-  // assign func3 = i_instr[14:12];
+  assign func3    = i_instr[14:12];
   assign opcode   = i_instr[6:0];
   assign o_sysins = (opcode == `TYPE_SYS);
 
@@ -112,6 +114,8 @@ module idu (
 
   assign o_ecall = o_sysins && !(|i_instr[31:7]);
   assign o_mret = o_sysins && !(|i_instr[31:30]) && (&i_instr[29:28]) && !(|i_instr[27:22]) && i_instr[21] && !(|i_instr[20:7]);
+
+  assign o_fence_i = (opcode == `TYPE_FENCE) & (func3 == 3'b001);
 
   assign o_pre_ready = i_post_ready;
   assign o_post_valid = i_pre_valid;

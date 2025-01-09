@@ -204,6 +204,8 @@ module idu_normal (
           default: id_err[1] = 1'b1;  //func3_err
         endcase
       end
+      `TYPE_FENCE: begin
+      end
       default: id_err[0] = 1'b1;  //opc_err
     endcase
   end

@@ -79,6 +79,7 @@ module top (
   wire sysins;
   wire mret;
   wire ecall;
+  wire fence_i;
 
   wire [`CPU_WIDTH-1:0] csrs;
   wire [`CPU_WIDTH-1:0] exu_csrd;
@@ -542,6 +543,7 @@ module top (
     .o_csrdwen    (idu_csrdwen),
     .o_ecall      (ecall),
     .o_mret       (mret),
+    .o_fence_i    (fence_i),
     .i_pre_valid  (ifu_valid),
     .o_pre_ready  (idu_ready),
     .o_post_valid (idu_valid),
@@ -917,6 +919,7 @@ module top (
   axi_icache u_axi_icache (
     .i_clk         (clock),
     .i_rst_n       (rst_n_sync),
+    .fence_i       (fence_i),
     .ifu_awready   (ifu_axi_awready),
     .ifu_awvalid   (ifu2icache_axi_awvalid),
     .ifu_awaddr    (ifu2icache_axi_awaddr),
