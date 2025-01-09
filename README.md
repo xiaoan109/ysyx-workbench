@@ -16,6 +16,8 @@ bash init.sh subproject-name
 
 **3. 后续会逐渐把Verilator替换为SV+UVM或者Python+cocotb等更适合于业界的验证平台(可能鸽了直接验开源的soc/cpu)**
 
+**⚠️准备找实习可能暂时搁置一段时间(咕咕咕，sry~)**
+
 # NPC架构图
 DVT自动生成
 
