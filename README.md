@@ -12,7 +12,7 @@ bash init.sh subproject-name
 # TODO
 **1. 目前为Multi-cycle CPU，还未加入流水线**
 
-**2. 目前已接入ysyxSoC，接入简单icache（只实现了cacheline数量和大小的参数化，可burst，但是没实现组相连），注意没写axi4delayer（不追求PFC的准确先跳过了），fence.i简单invalid了所有icache，有待修改**
+**2. 目前已接入ysyxSoC，接入简单icache（可能并未充分验证，formal部分未迁移组相连的代码），注意没写axi4delayer（不追求PFC的准确先跳过了），fence.i简单invalid了所有icache，有待修改**
 
 **3. 后续会逐渐把Verilator替换为SV+UVM或者Python+cocotb等更适合于业界的验证平台(可能鸽了直接验开源的soc/cpu)**
 
