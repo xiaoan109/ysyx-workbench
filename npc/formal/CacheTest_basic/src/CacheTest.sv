@@ -44,7 +44,7 @@ module CacheTest (
 );
 
   // localparam MEMSIZE = 128;  //byte
-  typedef enum {
+  typedef enum [1:0] {
     idle_t,
     wait_icache_t,
     check_t

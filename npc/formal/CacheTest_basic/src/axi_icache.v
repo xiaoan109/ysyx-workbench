@@ -83,7 +83,7 @@ module axi_icache (
   localparam INDEX_LSB = CACHELINE_SIZE_WIDTH;
   localparam OFFSET_MSB = INDEX_LSB - 1;
 
-  typedef enum {
+  typedef enum [2:0] {
     idle_t,
     check_cache_t,
     mem_araddr_t,

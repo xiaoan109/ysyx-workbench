@@ -76,16 +76,18 @@ module axi_icache (
   input  [             3:0] icache_rid
 );
 
-  localparam CACHELINE_SIZE = 8;  //byte(s), m = 3
-  localparam CACHELINE_NUM = 16;  //n = 4
+  localparam CACHELINE_SIZE = 8;  //m byte(s)
+  localparam CACHELINE_NUM = 16;  //n cacheline(s)
+  localparam CACHEWAY_NUM = 2;  //w-way set-associative
   localparam CACHELINE_SIZE_WIDTH = $clog2(CACHELINE_SIZE);
-  localparam CACHELINE_NUM_WIDTH = $clog2(CACHELINE_NUM);
-  localparam TAG_LSB = CACHELINE_SIZE_WIDTH + CACHELINE_NUM_WIDTH;
+  localparam CACHELINE_INDEX_WIDTH = $clog2(CACHELINE_NUM / CACHEWAY_NUM);
+  localparam TAG_LSB = CACHELINE_SIZE_WIDTH + CACHELINE_INDEX_WIDTH;
   localparam INDEX_MSB = TAG_LSB - 1;
   localparam INDEX_LSB = CACHELINE_SIZE_WIDTH;
   localparam OFFSET_MSB = INDEX_LSB - 1;
+  localparam CACHEWAY_WIDTH = CACHEWAY_NUM > 1 ? $clog2(CACHEWAY_NUM) : 1'b1;
 
-  typedef enum {
+  typedef enum [2:0] {
     idle_t,
     check_cache_t,
     mem_araddr_t,
@@ -93,74 +95,80 @@ module axi_icache (
     update_array_t,
     instr_fetch_t
   } state_t;
+  
 
   //cache state
-  reg  [                 2:0] state_next;
-  wire [                 2:0] state_reg;
+  reg [2:0] state_next;
+  wire [2:0] state_reg;
   //ifu AR
-  reg                         ifu_arready_next;
-  wire                        ifu_arready_reg;
+  reg ifu_arready_next;
+  wire ifu_arready_reg;
   //ifu R
-  reg                         ifu_rvalid_next;
+  reg ifu_rvalid_next;
   // reg  [      `CPU_WIDTH-1:0] ifu_rdata_next;
-  reg                         ifu_rlast_next;
-  reg  [                 3:0] ifu_rid_next;
-  wire                        ifu_rvalid_reg;
-  reg  [      `CPU_WIDTH-1:0] ifu_rdata_reg;
-  wire                        ifu_rlast_reg;
-  wire [                 3:0] ifu_rid_reg;
+  reg ifu_rlast_next;
+  reg [3:0] ifu_rid_next;
+  wire ifu_rvalid_reg;
+  reg [`CPU_WIDTH-1:0] ifu_rdata_reg;
+  wire ifu_rlast_reg;
+  wire [3:0] ifu_rid_reg;
   //read control
-  reg  [                 3:0] ifu_read_id_next;
-  reg  [      `CPU_WIDTH-1:0] ifu_read_addr_next;
-  reg  [                 7:0] ifu_read_count_next;
-  reg  [                 2:0] ifu_read_size_next;
-  reg  [                 1:0] ifu_read_burst_next;
-  wire [                 3:0] ifu_read_id_reg;
-  wire [      `CPU_WIDTH-1:0] ifu_read_addr_reg;
-  wire [                 7:0] ifu_read_count_reg;
-  wire [                 2:0] ifu_read_size_reg;
-  wire [                 1:0] ifu_read_burst_reg;
+  reg [3:0] ifu_read_id_next;
+  reg [`CPU_WIDTH-1:0] ifu_read_addr_next;
+  reg [7:0] ifu_read_count_next;
+  reg [2:0] ifu_read_size_next;
+  reg [1:0] ifu_read_burst_next;
+  wire [3:0] ifu_read_id_reg;
+  wire [`CPU_WIDTH-1:0] ifu_read_addr_reg;
+  wire [7:0] ifu_read_count_reg;
+  wire [2:0] ifu_read_size_reg;
+  wire [1:0] ifu_read_burst_reg;
   //cache read
-  reg                         data_rd_en;
-  reg                         valid_rd_en;
-  reg                         tag_rd_en;
+  reg data_rd_en;
+  reg valid_rd_en;
+  reg tag_rd_en;
   //cache write
-  reg                         data_wr_en;
-  reg                         valid_wr_en;  //set valid bit
-  reg                         tag_wr_en;
-  reg  [        OFFSET_MSB:0] icache_wr_offset_next;
-  wire [        OFFSET_MSB:0] icache_wr_offset_reg;
+  reg data_wr_en;
+  reg valid_wr_en;  //set valid bit
+  reg tag_wr_en;
+  reg [OFFSET_MSB:0] icache_wr_offset_next;
+  wire [OFFSET_MSB:0] icache_wr_offset_reg;
   // 31    m+n m+n-1   m m-1    0
   // +---------+---------+--------+
   // |   tag   |  index  | offset |
   // +---------+---------+--------+
-  reg  [`CPU_WIDTH-1:TAG_LSB] ifu_cache_tag;
-  reg  [ INDEX_MSB:INDEX_LSB] ifu_cache_index;
-  reg  [        OFFSET_MSB:0] ifu_cache_offset;
-  reg  [`CPU_WIDTH-1:TAG_LSB] icache_tag;
-  reg                         icache_valid;
+  reg [`CPU_WIDTH-1:TAG_LSB] ifu_cache_tag;
+  reg [INDEX_MSB:INDEX_LSB] ifu_cache_index;
+  reg [OFFSET_MSB:0] ifu_cache_offset;
+  reg [`CPU_WIDTH-1:TAG_LSB] icache_tag[CACHEWAY_NUM-1:0];
+  reg [CACHEWAY_NUM-1:0] icache_valid;
+  reg [CACHEWAY_WIDTH-1:0] icache_way_sel_next;
+  wire [CACHEWAY_WIDTH-1:0] icache_way_sel_reg;
   //Mem AR
-  reg                         icache_arvalid_next;
-  reg  [      `CPU_WIDTH-1:0] icache_araddr_next;
-  reg  [                 3:0] icache_arid_next;
-  reg  [                 7:0] icache_arlen_next;
-  reg  [                 2:0] icache_arsize_next;
-  reg  [                 1:0] icache_arburst_next;
-  wire                        icache_arvalid_reg;
-  wire [      `CPU_WIDTH-1:0] icache_araddr_reg;
-  wire [                 3:0] icache_arid_reg;
-  wire [                 7:0] icache_arlen_reg;
-  wire [                 2:0] icache_arsize_reg;
-  wire [                 1:0] icache_arburst_reg;
+  reg icache_arvalid_next;
+  reg [`CPU_WIDTH-1:0] icache_araddr_next;
+  reg [3:0] icache_arid_next;
+  reg [7:0] icache_arlen_next;
+  reg [2:0] icache_arsize_next;
+  reg [1:0] icache_arburst_next;
+  wire icache_arvalid_reg;
+  wire [`CPU_WIDTH-1:0] icache_araddr_reg;
+  wire [3:0] icache_arid_reg;
+  wire [7:0] icache_arlen_reg;
+  wire [2:0] icache_arsize_reg;
+  wire [1:0] icache_arburst_reg;
   //Mem R
-  reg                         icache_rready_next;
-  wire                        icache_rready_reg;
+  reg icache_rready_next;
+  wire icache_rready_reg;
   //cache data array
-  reg  [CACHELINE_SIZE*8-1:0] data_array                   [CACHELINE_NUM-1:0];
+  reg [CACHELINE_SIZE*8-1:0] data_array[CACHELINE_NUM / CACHEWAY_NUM-1:0][CACHEWAY_NUM-1:0];
   //cache valid bits
-  reg  [   CACHELINE_NUM-1:0] data_valid;
+  reg [CACHEWAY_NUM-1:0] data_valid[CACHELINE_NUM / CACHEWAY_NUM-1:0];
   //cache tag array
-  reg  [`CPU_WIDTH-1:TAG_LSB] tag_array                    [CACHELINE_NUM-1:0];
+  reg [`CPU_WIDTH-1:TAG_LSB] tag_array[CACHELINE_NUM / CACHEWAY_NUM-1:0][CACHEWAY_NUM-1:0];
+
+  integer i;
+  reg [CACHEWAY_WIDTH:0] check_result;
 
 
   //IFU Write
@@ -234,6 +242,8 @@ module axi_icache (
 
     icache_rready_next = 1'b0;
 
+    icache_way_sel_next = icache_way_sel_reg;
+
     case (state_reg)
       idle_t: begin
         ifu_arready_next = 1'b1;
@@ -257,9 +267,14 @@ module axi_icache (
         end
       end
       check_cache_t: begin
-        if (icache_valid && ifu_cache_tag == icache_tag) begin
+        check_result = check_cache(ifu_cache_tag);
+        if (check_result[0]) begin
+          icache_way_sel_next = check_result[CACHEWAY_WIDTH:1];
+          // $display("Cache hit, way sel :%d\n", icache_way_sel_next);
           state_next = instr_fetch_t;
         end else begin
+          icache_way_sel_next = icache_way_sel_reg + 1'b1; //TODO: cache replace
+          // $display("Cache miss, way sel :%d\n", icache_way_sel_next);
           state_next = mem_araddr_t;
         end
       end
@@ -323,25 +338,29 @@ module axi_icache (
 
   always @(posedge i_clk) begin
     if (data_rd_en) begin
-      ifu_rdata_reg <= data_array[ifu_cache_index][ifu_cache_offset*8+:`CPU_WIDTH];
+      ifu_rdata_reg <= data_array[ifu_cache_index][icache_way_sel_reg][ifu_cache_offset*8+:`CPU_WIDTH];
     end
     if (valid_rd_en) begin
       icache_valid <= data_valid[ifu_cache_index];
     end
     if (tag_rd_en) begin
-      icache_tag <= tag_array[ifu_cache_index];
+      for(i = 0; i < CACHEWAY_NUM; i = i + 1) begin
+        icache_tag[i] <= tag_array[ifu_cache_index][i];
+      end
     end
     if (data_wr_en) begin
-      data_array[ifu_cache_index][icache_wr_offset_reg*8+:`CPU_WIDTH] <= icache_rdata;
+      data_array[ifu_cache_index][icache_way_sel_reg][icache_wr_offset_reg*8+:`CPU_WIDTH] <= icache_rdata;
     end
     if (valid_wr_en) begin
-      data_valid[ifu_cache_index] <= 1'b1;
+      data_valid[ifu_cache_index] <= 1 << icache_way_sel_reg;
     end
     if (tag_wr_en) begin
-      tag_array[ifu_cache_index] <= ifu_cache_tag;
+      tag_array[ifu_cache_index][icache_way_sel_reg] <= ifu_cache_tag;
     end
     if (fence_i) begin
-      data_valid <= {CACHELINE_NUM{1'b0}};
+      for(i = 0; i < CACHELINE_NUM / CACHEWAY_NUM; i = i + 1) begin
+        data_valid[i] <= {CACHEWAY_NUM{1'b0}};
+      end
     end
   end
 
@@ -425,6 +444,27 @@ module axi_icache (
     .o_dout (icache_wr_offset_reg)
   );
 
+  stdreg #(
+    .WIDTH    (CACHEWAY_WIDTH),
+    .RESET_VAL({CACHEWAY_WIDTH{1'b0}})
+  ) u_icache_way_sel_reg (
+    .i_clk  (i_clk),
+    .i_rst_n(i_rst_n),
+    .i_wen  (1'b1),
+    .i_din  (icache_way_sel_next),
+    .o_dout (icache_way_sel_reg)
+  );
+
+  function [CACHEWAY_WIDTH:0] check_cache (input [`CPU_WIDTH-1:TAG_LSB] cache_tag); //[way_sel, cache_hit]
+    integer i;
+    for(i = 0; i < CACHEWAY_NUM; i = i + 1) begin
+      if(icache_valid[i] && cache_tag == icache_tag[i]) begin
+        return {i, 1'b1};
+      end
+    end
+    return 0;
+  endfunction
+
 `ifndef SYNTHESIS
   import "DPI-C" function void cache_AMAT(
     input int hit_rate,
@@ -458,7 +498,7 @@ module axi_icache (
     if (!i_rst_n) begin
       dram_acc_en <= 1'b0;
     end else if (state_reg == check_cache_t) begin
-      if (!(icache_valid && ifu_cache_tag == icache_tag)) begin
+      if (!check_cache(ifu_cache_tag)) begin
         dram_acc_en <= 1'b1;
       end
     end else if (state_reg == update_array_t) begin
@@ -476,7 +516,7 @@ module axi_icache (
     if (!i_rst_n) begin
       cache_hit_rate <= 32'b0;
     end else if (state_reg == check_cache_t) begin
-      if (icache_valid && ifu_cache_tag == icache_tag) begin
+      if (check_cache(ifu_cache_tag)) begin
         cache_hit_rate <= cache_hit_rate + 1'b1;
       end
     end
